@@ -2,9 +2,26 @@ From a01ae8478d3a8545241c5b064b6d369a330ee59f Mon Sep 17 00:00:00 2001
 Message-Id: <cover.1658159745.git.dyroneteng@gmail.com>
 From: Teng Long <dyroneteng@gmail.com>
 Date: Mon, 18 Jul 2022 23:55:45 +0800
-Subject: [PATCH v7 0/7] *** SUBJECT HERE ***
+Subject: [PATCH v7 0/7] trace2: dump scope when print "interesting" config 
 
-*** BLURB HERE ***
+Changes since v6:
+
+1. [1/7] Fixed the mistitled commit mesage.
+
+   [PATCH v6 1/7] "clean: fixed issues related to text output format"
+
+   to:
+
+   [PATCH v7 1/7] "pack-bitmap.c: fix formatting of error messages"
+
+2. [4/7] replace "warning()" to "warning_errno()" and rewrite commit message.
+
+3. [5/7] fix the logic error, move "error_errno()" before close(fd) to
+   avoid errno lost.
+
+4. [7/7] update Documentation/technical/api-trace2.txt here too.
+
+Thanks.
 
 Teng Long (7):
   pack-bitmap.c: fix formatting of error messages
