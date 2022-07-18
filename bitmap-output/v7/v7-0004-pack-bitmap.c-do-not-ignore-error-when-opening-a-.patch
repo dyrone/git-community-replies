@@ -1,0 +1,61 @@
+From d11ea092d511f3be4601f65ec54d492474fe821c Mon Sep 17 00:00:00 2001
+Message-Id: <d11ea092d511f3be4601f65ec54d492474fe821c.1658159746.git.dyroneteng@gmail.com>
+In-Reply-To: <cover.1658159745.git.dyroneteng@gmail.com>
+References: <cover.1658159745.git.dyroneteng@gmail.com>
+From: Teng Long <dyroneteng@gmail.com>
+Date: Mon, 4 Jul 2022 20:06:11 +0800
+Subject: [PATCH v7 4/7] pack-bitmap.c: do not ignore error when opening a
+ bitmap file
+
+Calls to git_open() to open the pack bitmap file and
+multi-pack bitmap file do not report any error when they
+fail.  These files are optional and it is not an error if
+open failed due to ENOENT, but we shouldn't be ignoring
+other kinds of errors.
+
+Signed-off-by: Teng Long <dyroneteng@gmail.com>
+---
+ pack-bitmap.c | 17 ++++++++++++-----
+ 1 file changed, 12 insertions(+), 5 deletions(-)
+
+diff --git a/pack-bitmap.c b/pack-bitmap.c
+index 7d8cc063fc..f8f9937c9e 100644
+--- a/pack-bitmap.c
++++ b/pack-bitmap.c
+@@ -317,10 +317,13 @@ static int open_midx_bitmap_1(struct bitmap_index *bitmap_git,
+ 	char *bitmap_name = midx_bitmap_filename(midx);
+ 	int fd = git_open(bitmap_name);
+ 
+-	free(bitmap_name);
+-
+-	if (fd < 0)
++	if (fd < 0) {
++		if (errno != ENOENT)
++			warning_errno("cannot open '%s'", bitmap_name);
++		free(bitmap_name);
+ 		return -1;
++	}
++	free(bitmap_name);
+ 
+ 	if (fstat(fd, &st)) {
+ 		close(fd);
+@@ -376,10 +379,14 @@ static int open_pack_bitmap_1(struct bitmap_index *bitmap_git, struct packed_git
+ 
+ 	bitmap_name = pack_bitmap_filename(packfile);
+ 	fd = git_open(bitmap_name);
+-	free(bitmap_name);
+ 
+-	if (fd < 0)
++	if (fd < 0) {
++		if (errno != ENOENT)
++			warning_errno("cannot open '%s'", bitmap_name);
++		free(bitmap_name);
+ 		return -1;
++	}
++	free(bitmap_name);
+ 
+ 	if (fstat(fd, &st)) {
+ 		close(fd);
+-- 
+2.35.0.rc0.679.gc613175da2
+

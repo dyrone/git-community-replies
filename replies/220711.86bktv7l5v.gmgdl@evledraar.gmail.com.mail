@@ -1,0 +1,31 @@
+Subject: Re: [PATCH v6 5/7] pack-bitmap.c: using error() instead of silently
+   returning -1
+
+Ævar Arnfjörð Bjarmason writes:
+
+
+> This is a logic error, as fstat() failed, but you're reproting errno()
+> after our call to close(), at which point it's anyone's guess what
+> "errno" is. It's only meaningful immediately after a system call.
+>
+> So either:
+>
+>     error_errno(....);
+>     close(fd);
+>     return -1;
+>
+> Or even better:
+>
+>     error_errno(...)
+>     if (close(fd))
+>         warning_errno("cannot close() bitmap file");
+>     return -1;
+>
+> Although that last one may be too pedantic.
+> ...
+> Same issue here.
+
+
+Yes, this will be fixed in next patch.
+
+Thanks.

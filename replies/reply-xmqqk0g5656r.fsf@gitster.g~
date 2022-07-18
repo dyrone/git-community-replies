@@ -1,0 +1,12 @@
+Subject: Re: [PATCH v5 1/1] ls-tree.c: support `--object-only` option for "git-ls-tree"
+
+
+> I notice that this changed from --oid to --object and I agree that
+> it would probably be more friendly to end users.  In fact, this
+>
+>    $ sed -ne '/^SYNOPSIS/,/^DESCRIPTION/p' Documentation/git-*.txt |
+>      grep -e -oid
+>
+> did not find any hits.
+
+Thank you for comfirming that.

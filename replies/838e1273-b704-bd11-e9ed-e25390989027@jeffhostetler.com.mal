@@ -1,0 +1,29 @@
+Subject: Re: [PATCH v5 5/5] tr2: avoid to print "interesting" config repeatedly
+
+
+> I agree.  Let's not try to dedup these.  IIRC, the tr2_cfg_cb()
+> machinery runs during a "read early" or "read very early" scan of
+> the config values and the program is still starting up (in some
+> sense).  For example, the command line may not have been fully
+> processed yet (again, IIRC).  So injecting a call here to force an
+> explicit lookup could cause problems.
+
+
+The "read early" or "read very early" is a little abtract for me I think, I will
+take a further look.
+
+
+> And I don't think it is worth the effort.  Let's just log the
+> context (system, global, local) as you described in the previous
+> version and be happy that we get multiple-but-now-qualified values.
+
+Yes.
+
+> Also, your new qualification would help us answer support questions
+> using telemetry where a user thought they had a feature on (say
+> globally) but was actually off at another level (say locally).
+
+That's certainly my original thought.
+
+
+Thanks.

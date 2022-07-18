@@ -1,0 +1,16 @@
+Subject: Re: [PATCH v6 1/7] clean: fixed issues related to text output format
+
+
+On Mon, 11 Jul 2022 14:08:13 -070 Junio C Hamano wrote:
+
+> This does not seem to be about "git clean".  Mistitled?
+
+Yes, will fix.
+
+> pack-bitmap.c: fix formatting of error messages
+>
+> perhaps?
+
+Will accept.
+
+Thanks.

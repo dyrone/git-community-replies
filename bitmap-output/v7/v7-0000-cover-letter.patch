@@ -1,0 +1,174 @@
+From a01ae8478d3a8545241c5b064b6d369a330ee59f Mon Sep 17 00:00:00 2001
+Message-Id: <cover.1658159745.git.dyroneteng@gmail.com>
+From: Teng Long <dyroneteng@gmail.com>
+Date: Mon, 18 Jul 2022 23:55:45 +0800
+Subject: [PATCH v7 0/7] *** SUBJECT HERE ***
+
+*** BLURB HERE ***
+
+Teng Long (7):
+  pack-bitmap.c: fix formatting of error messages
+  pack-bitmap.c: mark more strings for translations
+  pack-bitmap.c: rename "idx_name" to "bitmap_name"
+  pack-bitmap.c: do not ignore error when opening a bitmap file
+  pack-bitmap.c: using error() instead of silently returning -1
+  pack-bitmap.c: continue looping when first MIDX bitmap is found
+  tr2: dump names if config exist in multiple scopes
+
+ Documentation/technical/api-trace2.txt |  45 +++++++++++
+ pack-bitmap.c                          | 103 ++++++++++++++-----------
+ trace2/tr2_tgt_event.c                 |   3 +
+ trace2/tr2_tgt_normal.c                |   5 +-
+ trace2/tr2_tgt_perf.c                  |   9 ++-
+ 5 files changed, 117 insertions(+), 48 deletions(-)
+
+Range-diff against v6:
+1:  94a64ba895 ! 1:  7426b277ba clean: fixed issues related to text output format
+    @@ Metadata
+     Author: Teng Long <dyroneteng@gmail.com>
+     
+      ## Commit message ##
+    -    clean: fixed issues related to text output format
+    +    pack-bitmap.c: fix formatting of error messages
+     
+         There are some text output issues in 'pack-bitmap.c', they exist in
+         die(), error() etc. This includes issues with capitalization the
+2:  cadecd6b84 = 2:  4e493426a0 pack-bitmap.c: mark more strings for translations
+3:  d8a2235cb0 = 3:  263f45ba96 pack-bitmap.c: rename "idx_name" to "bitmap_name"
+4:  009cc49a18 ! 4:  d11ea092d5 pack-bitmap.c: don't ignore ENOENT silently
+    @@ Metadata
+     Author: Teng Long <dyroneteng@gmail.com>
+     
+      ## Commit message ##
+    -    pack-bitmap.c: don't ignore ENOENT silently
+    +    pack-bitmap.c: do not ignore error when opening a bitmap file
+     
+    -    When finished call git_open(), instead of ignoring ENOENT silently
+    -    and return error_errno(_("cannot stat...")), it's better to check
+    -    the ENOENT before then output the warning.
+    +    Calls to git_open() to open the pack bitmap file and
+    +    multi-pack bitmap file do not report any error when they
+    +    fail.  These files are optional and it is not an error if
+    +    open failed due to ENOENT, but we shouldn't be ignoring
+    +    other kinds of errors.
+     
+         Signed-off-by: Teng Long <dyroneteng@gmail.com>
+     
+    @@ pack-bitmap.c: static int open_midx_bitmap_1(struct bitmap_index *bitmap_git,
+     -	if (fd < 0)
+     +	if (fd < 0) {
+     +		if (errno != ENOENT)
+    -+			warning("'%s' cannot open '%s'", strerror(errno), bitmap_name);
+    ++			warning_errno("cannot open '%s'", bitmap_name);
+     +		free(bitmap_name);
+      		return -1;
+     +	}
+    @@ pack-bitmap.c: static int open_pack_bitmap_1(struct bitmap_index *bitmap_git, st
+     -	if (fd < 0)
+     +	if (fd < 0) {
+     +		if (errno != ENOENT)
+    -+			warning("'%s' cannot open '%s'", strerror(errno), bitmap_name);
+    ++			warning_errno("cannot open '%s'", bitmap_name);
+     +		free(bitmap_name);
+      		return -1;
+     +	}
+5:  52783555e2 ! 5:  f60efe78d6 pack-bitmap.c: using error() instead of silently returning -1
+    @@ Commit message
+     
+      ## pack-bitmap.c ##
+     @@ pack-bitmap.c: static int open_midx_bitmap_1(struct bitmap_index *bitmap_git,
+    + 	free(bitmap_name);
+      
+      	if (fstat(fd, &st)) {
+    ++		error_errno(_("cannot fstat bitmap file"));
+      		close(fd);
+    --		return -1;
+    -+		return error_errno(_("cannot fstat bitmap file"));
+    + 		return -1;
+      	}
+    - 
+    - 	if (bitmap_git->pack || bitmap_git->midx) {
+     @@ pack-bitmap.c: static int open_midx_bitmap_1(struct bitmap_index *bitmap_git,
+      	if (load_bitmap_header(bitmap_git) < 0)
+      		goto cleanup;
+    @@ pack-bitmap.c: static int open_midx_bitmap_1(struct bitmap_index *bitmap_git,
+      	if (load_midx_revindex(bitmap_git->midx) < 0) {
+      		warning(_("multi-pack bitmap is missing required reverse index"));
+     @@ pack-bitmap.c: static int open_pack_bitmap_1(struct bitmap_index *bitmap_git, struct packed_git
+    + 	free(bitmap_name);
+      
+      	if (fstat(fd, &st)) {
+    ++		error_errno(_("cannot fstat bitmap file"));
+      		close(fd);
+    --		return -1;
+    -+		return error_errno(_("cannot fstat bitmap file"));
+    + 		return -1;
+      	}
+    - 
+    - 	if (bitmap_git->pack || bitmap_git->midx) {
+6:  95832190b8 = 6:  83090308ad pack-bitmap.c: continue looping when first MIDX bitmap is found
+7:  c45ead51ff ! 7:  a01ae8478d tr2: dump names if config exist in multiple scopes
+    @@ Commit message
+     
+         Signed-off-by: Teng Long <dyroneteng@gmail.com>
+     
+    + ## Documentation/technical/api-trace2.txt ##
+    +@@ Documentation/technical/api-trace2.txt: at offset 508.
+    + This example also shows that thread names are assigned in a racy manner
+    + as each thread starts and allocates TLS storage.
+    + 
+    ++Print Configs::
+    ++
+    ++	  Dump "interesting" config values to trace2 log.
+    +++
+    ++The environment variable `GIT_TRACE2_CONFIG_PARAMS` and configuration
+    ++`trace2.configparams` can be used to output config values which you care
+    ++about. For example, assume that we want to config different `color.ui`
+    ++values in multiple scopes, such as:
+    +++
+    ++----------------
+    ++$ git config --system color.ui never
+    ++$ git config --global color.ui always
+    ++$ git config --local color.ui auto
+    ++$ git config --list --show-scope | grep 'color.ui'
+    ++system  color.ui=never
+    ++global  color.ui=always
+    ++local   color.ui=auto
+    ++----------------
+    +++
+    ++Then, mark the config `color.ui` as "interesting" config with
+    ++`GIT_TRACE2_CONFIG_PARAMS`:
+    +++
+    ++----------------
+    ++$ export GIT_TRACE2_PERF_BRIEF=1
+    ++$ export GIT_TRACE2_PERF=~/log.perf
+    ++$ export GIT_TRACE2_CONFIG_PARAMS=color.ui
+    ++$ git version
+    ++...
+    ++$ cat ~/log.perf
+    ++d0 | main                     | version      |     |           |           |              | ...
+    ++d0 | main                     | start        |     |  0.000284 |           |              | /opt/git/master/bin/git version
+    ++d0 | main                     | cmd_ancestry |     |           |           |              | ancestry:[bash sshd sshd sshd systemd]
+    ++d0 | main                     | cmd_name     |     |           |           |              | version (version)
+    ++d0 | main                     | exit         |     |  0.000419 |           |              | code:0
+    ++d0 | main                     | atexit       |     |  0.000426 |           |              | code:0
+    ++d0 | main                     | version      |     |           |           |              | ...
+    ++d0 | main                     | start        |     |  0.000275 |           |              | /opt/git/master/bin/git version
+    ++d0 | main                     | cmd_ancestry |     |           |           |              | ancestry:[bash sshd sshd sshd systemd]
+    ++d0 | main                     | cmd_name     |     |           |           |              | version (version)
+    ++d0 | main                     | def_param    |     |           |           |              | color.ui:never
+    ++d0 | main                     | def_param    |     |           |           |              | color.ui:always
+    ++d0 | main                     | def_param    |     |           |           |              | color.ui:auto
+    ++d0 | main                     | exit         |     |  0.000543 |           |              | code:0
+    ++d0 | main                     | atexit       |     |  0.000549 |           |              | code:0
+    ++----------------
+    + == Future Work
+    + 
+    + === Relationship to the Existing Trace Api (api-trace.txt)
+    +
+      ## trace2/tr2_tgt_event.c ##
+     @@ trace2/tr2_tgt_event.c: static void fn_param_fl(const char *file, int line, const char *param,
+      {
+-- 
+2.35.0.rc0.679.gc613175da2
+

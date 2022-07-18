@@ -1,0 +1,74 @@
+Subject: Re: [PATCH v6 7/7] tr2: dump names if config exist in multiple scopes
+
+
+Ævar Arnfjörð Bjarmason writes:
+
+> This seems sensible on its face, but...
+> ... we really should update Documentation/technical/api-trace2.txt here too.
+>
+> It does say "..." currently, so we're not lying there, but since we now
+> add "scope" unconditionally...
+
+Yes, I will update Documentation/technical/api-trace2.txt in next patch,
+the diff may look like blew, is it enough or anything inaccurate?
+
+
+diff --git a/Documentation/technical/api-trace2.txt b/Documentation/technical/api-trace2.txt
+index bb13ca3db8..48205a5ac5 100644
+--- a/Documentation/technical/api-trace2.txt
++++ b/Documentation/technical/api-trace2.txt
+@@ -1207,6 +1207,51 @@ at offset 508.
+ This example also shows that thread names are assigned in a racy manner
+ as each thread starts and allocates TLS storage.
+
++Print Configs::
++
++         Dump "interesting" config values to trace2 log.
+++
++The environment variable `GIT_TRACE2_CONFIG_PARAMS` and configuration
++`trace2.configparams` can be used to output config values which you care
++about. For example, assume that we want to config different `color.ui`
++values in multiple scopes, such as:
+++
++----------------
++$ git config --system color.ui never
++$ git config --global color.ui always
++$ git config --local color.ui auto
++$ git config --list --show-scope | grep 'color.ui'
++system  color.ui=never
++global  color.ui=always
++local   color.ui=auto
++----------------
+++
++Then, mark the config `color.ui` as "interesting" config with
++`GIT_TRACE2_CONFIG_PARAMS`:
+++
++----------------
++$ export GIT_TRACE2_PERF_BRIEF=1
++$ export GIT_TRACE2_PERF=~/log.perf
++$ export GIT_TRACE2_CONFIG_PARAMS=color.ui
++$ git version
++...
++$ cat ~/log.perf
++d0 | main                     | version      |     |           |           |              | ...
++d0 | main                     | start        |     |  0.000284 |           |              | /opt/git/master/bin/git version
++d0 | main                     | cmd_ancestry |     |           |           |              | ancestry:[bash sshd sshd sshd systemd]
++d0 | main                     | cmd_name     |     |           |           |              | version (version)
++d0 | main                     | exit         |     |  0.000419 |           |              | code:0
++d0 | main                     | atexit       |     |  0.000426 |           |              | code:0
++d0 | main                     | version      |     |           |           |              | ...
++d0 | main                     | start        |     |  0.000275 |           |              | /opt/git/master/bin/git version
++d0 | main                     | cmd_ancestry |     |           |           |              | ancestry:[bash sshd sshd sshd systemd]
++d0 | main                     | cmd_name     |     |           |           |              | version (version)
++d0 | main                     | def_param    |     |           |           |              | color.ui:never
++d0 | main                     | def_param    |     |           |           |              | color.ui:always
++d0 | main                     | def_param    |     |           |           |              | color.ui:auto
++d0 | main                     | exit         |     |  0.000543 |           |              | code:0
++d0 | main                     | atexit       |     |  0.000549 |           |              | code:0
++----------------
+ == Future Work
+
+ === Relationship to the Existing Trace Api (api-trace.txt)
+
+
+Thanks.

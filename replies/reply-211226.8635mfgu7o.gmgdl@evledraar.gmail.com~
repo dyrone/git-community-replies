@@ -1,0 +1,13 @@
+Subject: Re: What's cooking in git.git (Dec 2021, #05; Thu, 23)
+
+
+Yes there's the test problem I mentioned in [1], but in addition to that
+your current set of patches have around a ~10% performance regression,
+as noted in [2]. My RFC series[2] side-steps that by leaving the current
+code in-place, and only introducing a new optional --format path for new
+output formats.
+
+I really don't mind if you go for "WAY-1" first over my RFC --format
+"WAY-2", but I do think any such change should be prominently
+noting/selling that this new feature is worth the performance
+regression, or finding some alternate "WAY-1+" to avoid it.

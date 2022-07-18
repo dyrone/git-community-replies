@@ -1,0 +1,16 @@
+Subject: Re: [PATCH v6 4/7] pack-bitmap.c: don't ignore ENOENT silently
+
+
+On Mon, 11 Jul 2022 16:38:01 +0200, Ævar Arnfjörð Bjarmason wrote:
+
+> Makes sense, but...
+> ...
+> This should just be warning_errno("cannot open '%s'", bitmap_name),
+> unless I'm missing something...
+> ...
+> ...ditto.
+>
+
+You are right, I didn't notice warning_errno() before, will improve.
+
+Thanks.

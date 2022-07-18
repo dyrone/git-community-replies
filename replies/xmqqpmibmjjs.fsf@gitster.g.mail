@@ -1,0 +1,64 @@
+Subject: Re: [PATCH v6 4/7] pack-bitmap.c: don't ignore ENOENT silently
+
+Junio C Hamano <gitster@pobox.com> writes:
+
+> Both the title and the body describes a complete opposite of what
+> the patch does, doesn't it?
+>
+> 	pack-bitmap.c: do not ignore error when opening a bitmap file
+>
+> 	Calls to git_open() to open the pack bitmap file and
+> 	multi-pack bitmap file do not report any error when they
+> 	fail.  These files are optional and it is not an error if
+> 	open failed due to ENOENT, but we shouldn't be ignoring
+> 	other kinds of errors.
+>
+> or something?
+
+Yes, will apply, thanks for this detailed assistent.
+
+> > +	if (fd < 0) {
+> > +		if (errno != ENOENT)
+> > +			warning("'%s' cannot open '%s'", strerror(errno), bitmap_name);
+> > +		free(bitmap_name);
+>
+> Showing the errno is good, but I do not think it should be enclosed
+> in single quotes.
+
+Yes, it should not be enclosed around and by Ævar Arnfjörð Bjarmason's advice
+the "warning" should be replaced by "warning_errno", I agree with that,
+so, I think at the same time it solves this problem.
+
+> One thing you should consider when writing a "this is an optional
+> file and not finding it is perfectly fine" logic like this one is
+> that you may or may not want to ignore ENOTDIR.
+
+$ errno ENOTDIR
+ENOTDIR 20 Not a directory
+
+>ENOTDIR is what you
+> get when you say open("a/b") and "a" exists as something other than
+> a directory.  If you have a path with a slash in bitmap_name, and if
+> in a sane and healthy repository the leading path should always
+> exist (i.e. the file "a/b" may be missing, but the directory "a/"
+> should be there), then getting ENOTDIR is a noteworthy event.
+
+Make sense, and I tried to move "pack" away and touch a new file named "pack",
+then executed "git fsck", it will show the result about ENOTDIR:
+
+$ git fsck
+Checking object directories: 100% (256/256), done.
+error: unable to open object pack directory: /Users/tenglong.tl/Downloads/dyrone/.git/objects/pack: Not a directory
+
+So, this is how it works in git I think, caller should also print the "errno"
+when deal error and warning,  append errno string as the last part and the
+first part is to describe what's wrong happened in git.
+
+> There may be cases where ENOTDIR can justifiably and should be ignored.
+
+Yes. If I understand it correctly, I think it's the current scene.
+
+For example, if this happens in case like "./pack" is a non-directory, then
+we print warning which contains ENOTDIR description under current change.
+
+Thanks.

@@ -1,0 +1,34 @@
+Subject: Re: [PATCH v5 5/5] tr2: avoid to print "interesting" config repeatedly
+
+
+> Is tr2_cfg_load_patterns() run at early startup, but this perhaps at
+> runtime? I wonder if this is OK under threading, i.e. concurrent access
+> to your strset.
+
+Yes. I think it may have at runtime.
+Not for that reason, for now I think it's better to dump each config and
+scope name is a better way in terms of other replied suggestions.
+
+> The assumption you're making here doesn't hold in general, some config
+> is "last vaule wins", but for some other config all configured values
+> are important.
+
+Yes. Also based on the above replies.
+
+> Do we care in this case? I really don't know, but perhaps we can declare
+> "dedup" using the same facility we're using to wildcard-match keys, and
+> either make that optional or the default, e.g.:
+>
+> 	GIT_TRACE2_CONFIG_PARAMS='*:dedup,core.*:'
+>
+> I.e. to make it a list of <glob>[:<options>].
+>
+> Maybe not worth the effort...
+
+I think if we could print config and scope names is enough maybe. When users
+specify such as GIT_TRACE2_CONFIG_PARAMS, no one will cares about the extra
+few lines config output in my opinion, but it may be useful for some
+troubleshooting, so in my opinion this may not be implemented in this patch
+for the time being.
+
+Thanks.

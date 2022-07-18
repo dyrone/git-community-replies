@@ -1,0 +1,59 @@
+From 95832190b8bba72622ffe1474e99990a29706db8 Mon Sep 17 00:00:00 2001
+Message-Id: <95832190b8bba72622ffe1474e99990a29706db8.1657540174.git.dyroneteng@gmail.com>
+In-Reply-To: <cover.1657540174.git.dyroneteng@gmail.com>
+References: <cover.1657540174.git.dyroneteng@gmail.com>
+From: Teng Long <dyroneteng@gmail.com>
+Date: Tue, 29 Mar 2022 17:53:58 +0800
+Subject: [PATCH v6 6/7] pack-bitmap.c: continue looping when first MIDX bitmap
+ is found
+
+In "open_midx_bitmap()", we do a loop with the MIDX(es) in repo, when
+the first one has been found, then will break out by a "return"
+directly.
+
+But actually, it's better to continue the loop until we have visited
+both the MIDX in our repository, as well as any alternates (along with
+_their_ alternates, recursively).
+
+The reason for this is, there may exist more than one MIDX file in
+a repo. The "multi_pack_index" struct is actually designed as a singly
+linked list, and if a MIDX file has been already opened successfully,
+then the other MIDX files will be skipped and left with a warning
+"ignoring extra bitmap file." to the output.
+
+The discussion link of community:
+
+  https://public-inbox.org/git/YjzCTLLDCby+kJrZ@nand.local/
+
+Helped-by: Taylor Blau <me@ttaylorr.com>
+Signed-off-by: Teng Long <dyroneteng@gmail.com>
+---
+ pack-bitmap.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/pack-bitmap.c b/pack-bitmap.c
+index fbe3f58aff..7e69093d5a 100644
+--- a/pack-bitmap.c
++++ b/pack-bitmap.c
+@@ -504,15 +504,16 @@ static int open_pack_bitmap(struct repository *r,
+ static int open_midx_bitmap(struct repository *r,
+ 			    struct bitmap_index *bitmap_git)
+ {
++	int ret = -1;
+ 	struct multi_pack_index *midx;
+ 
+ 	assert(!bitmap_git->map);
+ 
+ 	for (midx = get_multi_pack_index(r); midx; midx = midx->next) {
+ 		if (!open_midx_bitmap_1(bitmap_git, midx))
+-			return 0;
++			ret = 0;
+ 	}
+-	return -1;
++	return ret;
+ }
+ 
+ static int open_bitmap(struct repository *r,
+-- 
+2.35.0.rc0.676.g60105b7097.dirty
+
