@@ -1,0 +1,10 @@
+Subject: Re: [PATCH v7 7/7] tr2: dump names if config exist in multiple scopes
+
+Jeff Hostetler <git@jeffhostetler.com> writes:
+
+> shouldn't this example in the docs have the scope value in the
+> next to last column as you noted in the cover letter ?
+
+oops, sorry for that. I will send a quick fix today.
+
+Thanks.
