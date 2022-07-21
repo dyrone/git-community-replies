@@ -1,0 +1,162 @@
+From 2f8fce659984c6ec2ed89ea6e6f3e06c5743a894 Mon Sep 17 00:00:00 2001
+From: Teng Long <dyroneteng@gmail.com>
+Date: Thu, 7 Jul 2022 21:48:32 +0800
+Subject: [PATCH 2/2] tr2: shows scope unconditionally in addition to key-value
+ pair
+
+When we specify GIT_TRACE2_CONFIG_PARAMS or trace2.configparams,
+trace2 will prints "interesting" config values to log. Sometimes,
+when a config set in multiple scope files, the following output
+looks like (the irrelevant fields are omitted here as "..."):
+
+...| def_param    |  ...  | core.multipackindex:false
+...| def_param    |  ...  | core.multipackindex:false
+...| def_param    |  ...  | core.multipackindex:false
+
+As the log shows, even each config in different scope is dumped, but
+we don't know which scope it comes from. Therefore, it's better to
+add the scope names as well to make them be more recognizable. For
+example, when execute:
+
+    $ GIT_TRACE2_PERF=1 \
+    > GIT_TRACE2_CONFIG_PARAMS=core.multipackIndex \
+    > git rev-list --test-bitmap HEAD"
+
+The following is the ouput (the irrelevant fields are omitted here
+as "..."):
+
+Format normal:
+... git.c:461 ... def_param scope:system core.multipackindex=false
+... git.c:461 ... def_param scope:global core.multipackindex=false
+... git.c:461 ... def_param scope:local core.multipackindex=false
+
+Format perf:
+
+... | def_param    | ... | scope:system | core.multipackindex:false
+... | def_param    | ... | scope:global | core.multipackindex:false
+... | def_param    | ... | scope:local  | core.multipackindex:false
+
+Format event:
+
+{"event":"def_param", ... ,"scope":"system","param":"core.multipackindex","value":"false"}
+{"event":"def_param", ... ,"scope":"global","param":"core.multipackindex","value":"false"}
+{"event":"def_param", ... ,"scope":"local","param":"core.multipackindex","value":"false"}
+
+Signed-off-by: Teng Long <dyroneteng@gmail.com>
+---
+ Documentation/technical/api-trace2.txt | 20 +++++++++++++++-----
+ trace2/tr2_tgt_event.c                 |  3 +++
+ trace2/tr2_tgt_normal.c                |  5 ++++-
+ trace2/tr2_tgt_perf.c                  |  9 +++++++--
+ 4 files changed, 29 insertions(+), 8 deletions(-)
+
+diff --git a/Documentation/technical/api-trace2.txt b/Documentation/technical/api-trace2.txt
+index dcd0429037..229f31ab31 100644
+--- a/Documentation/technical/api-trace2.txt
++++ b/Documentation/technical/api-trace2.txt
+@@ -717,6 +717,7 @@ The "exec_id" field is a command-unique id and is only useful if the
+ {
+ 	"event":"def_param",
+ 	...
++	scope: <a string that 'git config --show-scope' would return>
+ 	"param":"core.abbrev",
+ 	"value":"7"
+ }
+@@ -1213,10 +1214,17 @@ Print Configs::
+ +
+ The environment variable `GIT_TRACE2_CONFIG_PARAMS` and configuration
+ `trace2.configparams` can be used to output config values which you care
+-about(see linkgit:git-config[1). For example:
++about(see linkgit:git-config[1). For example assume that we want to config
++different `color.ui` values in multiple scopes, such as:
+ +
+ ----------------
+-$ git config color.ui auto
++$ git config --system color.ui never
++$ git config --global color.ui always
++$ git config --local color.ui auto
++$ git config --list --show-scope | grep 'color.ui'
++system  color.ui=never
++global  color.ui=always
++local   color.ui=auto
+ ----------------
+ +
+ Then, mark the config `color.ui` as "interesting" config with
+@@ -1232,11 +1240,13 @@ $ cat ~/log.perf
+ d0 | main                     | version      |     |           |           |              | ...
+ d0 | main                     | start        |     |  0.001642 |           |              | /usr/local/bin/git version
+ d0 | main                     | cmd_name     |     |           |           |              | version (version)
+-d0 | main                     | def_param    |     |           |           |              | color.ui:auto
++d0 | main                     | def_param    |     |           |           | scope:system | color.ui:never
++d0 | main                     | def_param    |     |           |           | scope:global | color.ui:always
++d0 | main                     | def_param    |     |           |           | scope:local  | color.ui:auto
+ d0 | main                     | data         | r0  |  0.002100 |  0.002100 | fsync        | fsync/writeout-only:0
+ d0 | main                     | data         | r0  |  0.002126 |  0.002126 | fsync        | fsync/hardware-flush:0
+-d0 | main                     | exit         |     |  0.002142 |           |              | code:0
+-d0 | main                     | atexit       |     |  0.002161 |           |              | code:0
++d0 | main                     | exit         |     |  0.000470 |           |              | code:0
++d0 | main                     | atexit       |     |  0.000477 |           |              | code:0
+ ----------------
+ == Future Work
+ 
+diff --git a/trace2/tr2_tgt_event.c b/trace2/tr2_tgt_event.c
+index c5c8cfbbaa..37a3163be1 100644
+--- a/trace2/tr2_tgt_event.c
++++ b/trace2/tr2_tgt_event.c
+@@ -479,9 +479,12 @@ static void fn_param_fl(const char *file, int line, const char *param,
+ {
+ 	const char *event_name = "def_param";
+ 	struct json_writer jw = JSON_WRITER_INIT;
++	enum config_scope scope = current_config_scope();
++	const char *scope_name = config_scope_name(scope);
+ 
+ 	jw_object_begin(&jw, 0);
+ 	event_fmt_prepare(event_name, file, line, NULL, &jw);
++	jw_object_string(&jw, "scope", scope_name);
+ 	jw_object_string(&jw, "param", param);
+ 	jw_object_string(&jw, "value", value);
+ 	jw_end(&jw);
+diff --git a/trace2/tr2_tgt_normal.c b/trace2/tr2_tgt_normal.c
+index c42fbade7f..69f8033077 100644
+--- a/trace2/tr2_tgt_normal.c
++++ b/trace2/tr2_tgt_normal.c
+@@ -298,8 +298,11 @@ static void fn_param_fl(const char *file, int line, const char *param,
+ 			const char *value)
+ {
+ 	struct strbuf buf_payload = STRBUF_INIT;
++	enum config_scope scope = current_config_scope();
++	const char *scope_name = config_scope_name(scope);
+ 
+-	strbuf_addf(&buf_payload, "def_param %s=%s", param, value);
++	strbuf_addf(&buf_payload, "def_param scope:%s %s=%s", scope_name, param,
++		    value);
+ 	normal_io_write_fl(file, line, &buf_payload);
+ 	strbuf_release(&buf_payload);
+ }
+diff --git a/trace2/tr2_tgt_perf.c b/trace2/tr2_tgt_perf.c
+index a1eff8bea3..8cb792488c 100644
+--- a/trace2/tr2_tgt_perf.c
++++ b/trace2/tr2_tgt_perf.c
+@@ -441,12 +441,17 @@ static void fn_param_fl(const char *file, int line, const char *param,
+ {
+ 	const char *event_name = "def_param";
+ 	struct strbuf buf_payload = STRBUF_INIT;
++	struct strbuf scope_payload = STRBUF_INIT;
++	enum config_scope scope = current_config_scope();
++	const char *scope_name = config_scope_name(scope);
+ 
+ 	strbuf_addf(&buf_payload, "%s:%s", param, value);
++	strbuf_addf(&scope_payload, "%s:%s", "scope", scope_name);
+ 
+-	perf_io_write_fl(file, line, event_name, NULL, NULL, NULL, NULL,
+-			 &buf_payload);
++	perf_io_write_fl(file, line, event_name, NULL, NULL, NULL,
++			 scope_payload.buf, &buf_payload);
+ 	strbuf_release(&buf_payload);
++	strbuf_release(&scope_payload);
+ }
+ 
+ static void fn_repo_fl(const char *file, int line,
+-- 
+2.37.1.1.g8cbb44ffc4.dirty
+

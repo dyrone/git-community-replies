@@ -1,0 +1,27 @@
+From 2f8fce659984c6ec2ed89ea6e6f3e06c5743a894 Mon Sep 17 00:00:00 2001
+From: Teng Long <dyroneteng@gmail.com>
+Date: Thu, 21 Jul 2022 21:20:44 +0800
+Subject: [PATCH 0/2] tr2: shows the scope unconditionally with config 
+
+This series is separated from :
+
+  https://public-inbox.org/git/a01ae8478d3a8545241c5b064b6d369a330ee59f.1658159746.git.dyroneteng@gmail.com/
+
+and now move to a independent topic now.
+
+Thanks.
+
+
+Teng Long (2):
+  api-trace2.txt: print config key-value pair
+  tr2: shows scope unconditionally in addition to key-value pair
+
+ Documentation/technical/api-trace2.txt | 41 ++++++++++++++++++++++++++
+ trace2/tr2_tgt_event.c                 |  3 ++
+ trace2/tr2_tgt_normal.c                |  5 +++-
+ trace2/tr2_tgt_perf.c                  |  9 ++++--
+ 4 files changed, 55 insertions(+), 3 deletions(-)
+
+-- 
+2.37.1.1.g8cbb44ffc4.dirty
+

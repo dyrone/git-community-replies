@@ -1,0 +1,60 @@
+From bebd97c832bcded6a16eb17e914658d25323587a Mon Sep 17 00:00:00 2001
+From: Teng Long <dyroneteng@gmail.com>
+Date: Tue, 19 Jul 2022 17:30:35 +0800
+Subject: [PATCH 1/2] api-trace2.txt: print config key-value pair
+
+It's supported to print "interesting" config key-value paire
+to tr2 log by setting "GIT_TRACE2_CONFIG_PARAMS" environment
+variable and the "trace2.configparam" config, let's add the
+related docs in Documentaion/technical/api-trace2.txt.
+
+Signed-off-by: Teng Long <dyroneteng@gmail.com>
+---
+ Documentation/technical/api-trace2.txt | 31 ++++++++++++++++++++++++++
+ 1 file changed, 31 insertions(+)
+
+diff --git a/Documentation/technical/api-trace2.txt b/Documentation/technical/api-trace2.txt
+index 77a150b30e..dcd0429037 100644
+--- a/Documentation/technical/api-trace2.txt
++++ b/Documentation/technical/api-trace2.txt
+@@ -1207,6 +1207,37 @@ at offset 508.
+ This example also shows that thread names are assigned in a racy manner
+ as each thread starts and allocates TLS storage.
+ 
++Print Configs::
++
++	  Dump "interesting" config values to trace2 log.
+++
++The environment variable `GIT_TRACE2_CONFIG_PARAMS` and configuration
++`trace2.configparams` can be used to output config values which you care
++about(see linkgit:git-config[1). For example:
+++
++----------------
++$ git config color.ui auto
++----------------
+++
++Then, mark the config `color.ui` as "interesting" config with
++`GIT_TRACE2_CONFIG_PARAMS`:
+++
++----------------
++$ export GIT_TRACE2_PERF_BRIEF=1
++$ export GIT_TRACE2_PERF=~/log.perf
++$ export GIT_TRACE2_CONFIG_PARAMS=color.ui
++$ git version
++...
++$ cat ~/log.perf
++d0 | main                     | version      |     |           |           |              | ...
++d0 | main                     | start        |     |  0.001642 |           |              | /usr/local/bin/git version
++d0 | main                     | cmd_name     |     |           |           |              | version (version)
++d0 | main                     | def_param    |     |           |           |              | color.ui:auto
++d0 | main                     | data         | r0  |  0.002100 |  0.002100 | fsync        | fsync/writeout-only:0
++d0 | main                     | data         | r0  |  0.002126 |  0.002126 | fsync        | fsync/hardware-flush:0
++d0 | main                     | exit         |     |  0.002142 |           |              | code:0
++d0 | main                     | atexit       |     |  0.002161 |           |              | code:0
++----------------
+ == Future Work
+ 
+ === Relationship to the Existing Trace Api (api-trace.txt)
+-- 
+2.37.1.1.g8cbb44ffc4.dirty
+
