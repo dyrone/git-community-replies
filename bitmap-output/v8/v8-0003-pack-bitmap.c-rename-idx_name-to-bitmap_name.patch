@@ -1,0 +1,63 @@
+From 263f45ba96c322665f102e22e1899c93541d87c4 Mon Sep 17 00:00:00 2001
+Message-Id: <263f45ba96c322665f102e22e1899c93541d87c4.1658393856.git.dyroneteng@gmail.com>
+In-Reply-To: <cover.1658393855.git.dyroneteng@gmail.com>
+References: <cover.1658393855.git.dyroneteng@gmail.com>
+From: Teng Long <dyroneteng@gmail.com>
+Date: Thu, 31 Mar 2022 11:16:32 +0800
+Subject: [PATCH v8 3/6] pack-bitmap.c: rename "idx_name" to "bitmap_name"
+
+In "open_pack_bitmap_1()" and "open_midx_bitmap_1()" we use
+a var named "idx_name" to represent the bitmap filename which
+is computed by "midx_bitmap_filename()" or "pack_bitmap_filename()"
+before we open it.
+
+There may bring some confusion in this "idx_name" naming, which
+might lead us to think of ".idx "or" multi-pack-index" files,
+although bitmap is essentially can be understood as a kind of index,
+let's define this name a little more accurate here.
+
+Signed-off-by: Teng Long <dyroneteng@gmail.com>
+---
+ pack-bitmap.c | 14 +++++++-------
+ 1 file changed, 7 insertions(+), 7 deletions(-)
+
+diff --git a/pack-bitmap.c b/pack-bitmap.c
+index c970ab46dd..7d8cc063fc 100644
+--- a/pack-bitmap.c
++++ b/pack-bitmap.c
+@@ -314,10 +314,10 @@ static int open_midx_bitmap_1(struct bitmap_index *bitmap_git,
+ 			      struct multi_pack_index *midx)
+ {
+ 	struct stat st;
+-	char *idx_name = midx_bitmap_filename(midx);
+-	int fd = git_open(idx_name);
++	char *bitmap_name = midx_bitmap_filename(midx);
++	int fd = git_open(bitmap_name);
+ 
+-	free(idx_name);
++	free(bitmap_name);
+ 
+ 	if (fd < 0)
+ 		return -1;
+@@ -369,14 +369,14 @@ static int open_pack_bitmap_1(struct bitmap_index *bitmap_git, struct packed_git
+ {
+ 	int fd;
+ 	struct stat st;
+-	char *idx_name;
++	char *bitmap_name;
+ 
+ 	if (open_pack_index(packfile))
+ 		return -1;
+ 
+-	idx_name = pack_bitmap_filename(packfile);
+-	fd = git_open(idx_name);
+-	free(idx_name);
++	bitmap_name = pack_bitmap_filename(packfile);
++	fd = git_open(bitmap_name);
++	free(bitmap_name);
+ 
+ 	if (fd < 0)
+ 		return -1;
+-- 
+2.35.0.rc0.679.gc613175da2
+

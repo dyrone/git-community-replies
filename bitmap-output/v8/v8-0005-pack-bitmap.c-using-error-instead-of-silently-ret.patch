@@ -1,0 +1,59 @@
+From f60efe78d6a426f4a834680adf62a55937089aa9 Mon Sep 17 00:00:00 2001
+Message-Id: <f60efe78d6a426f4a834680adf62a55937089aa9.1658393856.git.dyroneteng@gmail.com>
+In-Reply-To: <cover.1658393855.git.dyroneteng@gmail.com>
+References: <cover.1658393855.git.dyroneteng@gmail.com>
+From: Teng Long <dyroneteng@gmail.com>
+Date: Thu, 31 Mar 2022 15:47:04 +0800
+Subject: [PATCH v8 5/6] pack-bitmap.c: using error() instead of silently
+ returning -1
+
+In "open_pack_bitmap_1()" and "open_midx_bitmap_1()", it's better to
+return error() instead of "-1" when some unexpected error occurs like
+"stat bitmap file failed", "bitmap header is invalid" or "checksum
+mismatch", etc.
+
+There are places where we do not replace, such as when the bitmap
+does not exist (no bitmap in repository is allowed) or when another
+bitmap has already been opened (in which case it should be a warning
+rather than an error).
+
+Signed-off-by: Teng Long <dyroneteng@gmail.com>
+---
+ pack-bitmap.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/pack-bitmap.c b/pack-bitmap.c
+index f8f9937c9e..318edd8e0d 100644
+--- a/pack-bitmap.c
++++ b/pack-bitmap.c
+@@ -326,6 +326,7 @@ static int open_midx_bitmap_1(struct bitmap_index *bitmap_git,
+ 	free(bitmap_name);
+ 
+ 	if (fstat(fd, &st)) {
++		error_errno(_("cannot fstat bitmap file"));
+ 		close(fd);
+ 		return -1;
+ 	}
+@@ -350,8 +351,10 @@ static int open_midx_bitmap_1(struct bitmap_index *bitmap_git,
+ 	if (load_bitmap_header(bitmap_git) < 0)
+ 		goto cleanup;
+ 
+-	if (!hasheq(get_midx_checksum(bitmap_git->midx), bitmap_git->checksum))
++	if (!hasheq(get_midx_checksum(bitmap_git->midx), bitmap_git->checksum)) {
++		error(_("checksum doesn't match in MIDX and bitmap"));
+ 		goto cleanup;
++	}
+ 
+ 	if (load_midx_revindex(bitmap_git->midx) < 0) {
+ 		warning(_("multi-pack bitmap is missing required reverse index"));
+@@ -389,6 +392,7 @@ static int open_pack_bitmap_1(struct bitmap_index *bitmap_git, struct packed_git
+ 	free(bitmap_name);
+ 
+ 	if (fstat(fd, &st)) {
++		error_errno(_("cannot fstat bitmap file"));
+ 		close(fd);
+ 		return -1;
+ 	}
+-- 
+2.35.0.rc0.679.gc613175da2
+
