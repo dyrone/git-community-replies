@@ -1,0 +1,59 @@
+From 78575cca0b3ef4acb1bb42a00ccd3104f3fa4cea Mon Sep 17 00:00:00 2001
+Message-Id: <cover.1658472474.git.dyroneteng@gmail.com>
+From: Teng Long <dyroneteng@gmail.com>
+Date: Fri, 22 Jul 2022 14:47:54 +0800
+Subject: [PATCH v1 0/2] tr2: shows the scope unconditionally with config 
+
+Changes since the initial patch:
+
+1. [1/2] optimize the "scope" field representation with real syntax and
+concrete value.
+
+Thanks.
+
+Teng Long (2):
+  api-trace2.txt: print config key-value pair
+  tr2: shows scope unconditionally in addition to key-value pair
+
+ Documentation/technical/api-trace2.txt | 41 ++++++++++++++++++++++++++
+ trace2/tr2_tgt_event.c                 |  3 ++
+ trace2/tr2_tgt_normal.c                |  5 +++-
+ trace2/tr2_tgt_perf.c                  |  9 ++++--
+ 4 files changed, 55 insertions(+), 3 deletions(-)
+
+Range-diff against v0:
+1:  bebd97c832 ! 1:  32f8b9ae6b api-trace2.txt: print config key-value pair
+    @@ Commit message
+         Signed-off-by: Teng Long <dyroneteng@gmail.com>
+     
+      ## Documentation/technical/api-trace2.txt ##
+    +@@ Documentation/technical/api-trace2.txt: The "exec_id" field is a command-unique id and is only useful if the
+    + {
+    + 	"event":"def_param",
+    + 	...
+    ++	"scope":"global",
+    + 	"param":"core.abbrev",
+    + 	"value":"7"
+    + }
+     @@ Documentation/technical/api-trace2.txt: at offset 508.
+      This example also shows that thread names are assigned in a racy manner
+      as each thread starts and allocates TLS storage.
+2:  2f8fce6599 ! 2:  78575cca0b tr2: shows scope unconditionally in addition to key-value pair
+    @@ Commit message
+         Signed-off-by: Teng Long <dyroneteng@gmail.com>
+     
+      ## Documentation/technical/api-trace2.txt ##
+    -@@ Documentation/technical/api-trace2.txt: The "exec_id" field is a command-unique id and is only useful if the
+    - {
+    - 	"event":"def_param",
+    - 	...
+    -+	scope: <a string that 'git config --show-scope' would return>
+    - 	"param":"core.abbrev",
+    - 	"value":"7"
+    - }
+     @@ Documentation/technical/api-trace2.txt: Print Configs::
+      +
+      The environment variable `GIT_TRACE2_CONFIG_PARAMS` and configuration
+-- 
+2.37.1.1.g8cbb44ffc4.dirty
+
