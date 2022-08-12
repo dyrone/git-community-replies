@@ -1,10 +1,10 @@
-From 32f8b9ae6bb6aff0ce55ee494c4c0d40c672752b Mon Sep 17 00:00:00 2001
-Message-Id: <32f8b9ae6bb6aff0ce55ee494c4c0d40c672752b.1658472474.git.dyroneteng@gmail.com>
-In-Reply-To: <cover.1658472474.git.dyroneteng@gmail.com>
-References: <cover.1658472474.git.dyroneteng@gmail.com>
+From 84bd8a71d7a1adcbcc7ef954ff10ea932e430f1b Mon Sep 17 00:00:00 2001
+Message-Id: <84bd8a71d7a1adcbcc7ef954ff10ea932e430f1b.1660272404.git.dyroneteng@gmail.com>
+In-Reply-To: <cover.1660272404.git.dyroneteng@gmail.com>
+References: <cover.1660272404.git.dyroneteng@gmail.com>
 From: Teng Long <dyroneteng@gmail.com>
 Date: Tue, 19 Jul 2022 17:30:35 +0800
-Subject: [PATCH v1 1/2] api-trace2.txt: print config key-value pair
+Subject: [PATCH v2 1/2] api-trace2.txt: print config key-value pair
 
 It's supported to print "interesting" config key-value paire
 to tr2 log by setting "GIT_TRACE2_CONFIG_PARAMS" environment
@@ -13,32 +13,24 @@ related docs in Documentaion/technical/api-trace2.txt.
 
 Signed-off-by: Teng Long <dyroneteng@gmail.com>
 ---
- Documentation/technical/api-trace2.txt | 32 ++++++++++++++++++++++++++
- 1 file changed, 32 insertions(+)
+ Documentation/technical/api-trace2.txt | 31 ++++++++++++++++++++++++++
+ 1 file changed, 31 insertions(+)
 
 diff --git a/Documentation/technical/api-trace2.txt b/Documentation/technical/api-trace2.txt
-index 77a150b30e..ddc0bfb9c9 100644
+index 77a150b30e..38d0878d85 100644
 --- a/Documentation/technical/api-trace2.txt
 +++ b/Documentation/technical/api-trace2.txt
-@@ -717,6 +717,7 @@ The "exec_id" field is a command-unique id and is only useful if the
- {
- 	"event":"def_param",
- 	...
-+	"scope":"global",
- 	"param":"core.abbrev",
- 	"value":"7"
- }
-@@ -1207,6 +1208,37 @@ at offset 508.
+@@ -1207,6 +1207,37 @@ at offset 508.
  This example also shows that thread names are assigned in a racy manner
  as each thread starts and allocates TLS storage.
  
-+Print Configs::
++Config (def param) Events::
 +
 +	  Dump "interesting" config values to trace2 log.
 ++
-+The environment variable `GIT_TRACE2_CONFIG_PARAMS` and configuration
-+`trace2.configparams` can be used to output config values which you care
-+about(see linkgit:git-config[1). For example:
++We can optionally emit configuration events, see
++`trace2.configparams` in linkgit:git-config[1] for how to enable
++it.
 ++
 +----------------
 +$ git config color.ui auto

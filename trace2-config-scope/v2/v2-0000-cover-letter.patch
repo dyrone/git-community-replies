@@ -1,0 +1,77 @@
+From 9856058df68d61557b11dc2fc7179acae24f5d8e Mon Sep 17 00:00:00 2001
+Message-Id: <cover.1660272404.git.dyroneteng@gmail.com>
+From: Teng Long <dyroneteng@gmail.com>
+Date: Fri, 12 Aug 2022 10:46:44 +0800
+Subject: [PATCH v2 0/2] tr2: shows the scope unconditionally with config 
+
+Diff from v1:
+
+* Fix the premature code in [1/2] by Junio's comment in:
+
+  https://public-inbox.org/git/xmqqy1wkc0yw.fsf@gitster.g/
+
+* Optimize the documentaion in [1/2] by Ævar's comment in:
+
+  https://public-inbox.org/git/220722.86fsits91m.gmgdl@evledraar.gmail.com/
+
+I send this patch version a little earlier maybe because some context not fully
+discussed or solved, intend to avoid context signal disappearance because it's
+been lasted a while now. 
+
+Thanks.
+
+Teng Long (2):
+  api-trace2.txt: print config key-value pair
+  tr2: shows scope unconditionally in addition to key-value pair
+
+ Documentation/technical/api-trace2.txt | 40 ++++++++++++++++++++++++++
+ trace2/tr2_tgt_event.c                 |  3 ++
+ trace2/tr2_tgt_normal.c                |  5 +++-
+ trace2/tr2_tgt_perf.c                  |  9 ++++--
+ 4 files changed, 54 insertions(+), 3 deletions(-)
+
+Range-diff against v1:
+1:  bebd97c832 ! 1:  84bd8a71d7 api-trace2.txt: print config key-value pair
+    @@ Documentation/technical/api-trace2.txt: at offset 508.
+      This example also shows that thread names are assigned in a racy manner
+      as each thread starts and allocates TLS storage.
+      
+    -+Print Configs::
+    ++Config (def param) Events::
+     +
+     +	  Dump "interesting" config values to trace2 log.
+     ++
+    -+The environment variable `GIT_TRACE2_CONFIG_PARAMS` and configuration
+    -+`trace2.configparams` can be used to output config values which you care
+    -+about(see linkgit:git-config[1). For example:
+    ++We can optionally emit configuration events, see
+    ++`trace2.configparams` in linkgit:git-config[1] for how to enable
+    ++it.
+     ++
+     +----------------
+     +$ git config color.ui auto
+2:  2f8fce6599 ! 2:  9856058df6 tr2: shows scope unconditionally in addition to key-value pair
+    @@ Documentation/technical/api-trace2.txt: The "exec_id" field is a command-unique
+      {
+      	"event":"def_param",
+      	...
+    -+	scope: <a string that 'git config --show-scope' would return>
+    ++	"scope":"global",
+      	"param":"core.abbrev",
+      	"value":"7"
+      }
+    -@@ Documentation/technical/api-trace2.txt: Print Configs::
+    - +
+    - The environment variable `GIT_TRACE2_CONFIG_PARAMS` and configuration
+    - `trace2.configparams` can be used to output config values which you care
+    --about(see linkgit:git-config[1). For example:
+    -+about(see linkgit:git-config[1). For example assume that we want to config
+    -+different `color.ui` values in multiple scopes, such as:
+    +@@ Documentation/technical/api-trace2.txt: We can optionally emit configuration events, see
+    + it.
+      +
+      ----------------
+     -$ git config color.ui auto
+-- 
+2.37.1.1.g8cbb44ffc4.dirty
+

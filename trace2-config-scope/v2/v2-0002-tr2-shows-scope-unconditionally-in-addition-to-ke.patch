@@ -1,10 +1,10 @@
-From 78575cca0b3ef4acb1bb42a00ccd3104f3fa4cea Mon Sep 17 00:00:00 2001
-Message-Id: <78575cca0b3ef4acb1bb42a00ccd3104f3fa4cea.1658472474.git.dyroneteng@gmail.com>
-In-Reply-To: <cover.1658472474.git.dyroneteng@gmail.com>
-References: <cover.1658472474.git.dyroneteng@gmail.com>
+From 9856058df68d61557b11dc2fc7179acae24f5d8e Mon Sep 17 00:00:00 2001
+Message-Id: <9856058df68d61557b11dc2fc7179acae24f5d8e.1660272404.git.dyroneteng@gmail.com>
+In-Reply-To: <cover.1660272404.git.dyroneteng@gmail.com>
+References: <cover.1660272404.git.dyroneteng@gmail.com>
 From: Teng Long <dyroneteng@gmail.com>
 Date: Thu, 7 Jul 2022 21:48:32 +0800
-Subject: [PATCH v1 2/2] tr2: shows scope unconditionally in addition to
+Subject: [PATCH v2 2/2] tr2: shows scope unconditionally in addition to
  key-value pair
 
 When we specify GIT_TRACE2_CONFIG_PARAMS or trace2.configparams,
@@ -47,23 +47,26 @@ Format event:
 
 Signed-off-by: Teng Long <dyroneteng@gmail.com>
 ---
- Documentation/technical/api-trace2.txt | 19 ++++++++++++++-----
+ Documentation/technical/api-trace2.txt | 17 +++++++++++++----
  trace2/tr2_tgt_event.c                 |  3 +++
  trace2/tr2_tgt_normal.c                |  5 ++++-
  trace2/tr2_tgt_perf.c                  |  9 +++++++--
- 4 files changed, 28 insertions(+), 8 deletions(-)
+ 4 files changed, 27 insertions(+), 7 deletions(-)
 
 diff --git a/Documentation/technical/api-trace2.txt b/Documentation/technical/api-trace2.txt
-index ddc0bfb9c9..534cfa98fa 100644
+index 38d0878d85..2afa28bb5a 100644
 --- a/Documentation/technical/api-trace2.txt
 +++ b/Documentation/technical/api-trace2.txt
-@@ -1214,10 +1214,17 @@ Print Configs::
- +
- The environment variable `GIT_TRACE2_CONFIG_PARAMS` and configuration
- `trace2.configparams` can be used to output config values which you care
--about(see linkgit:git-config[1). For example:
-+about(see linkgit:git-config[1). For example assume that we want to config
-+different `color.ui` values in multiple scopes, such as:
+@@ -717,6 +717,7 @@ The "exec_id" field is a command-unique id and is only useful if the
+ {
+ 	"event":"def_param",
+ 	...
++	"scope":"global",
+ 	"param":"core.abbrev",
+ 	"value":"7"
+ }
+@@ -1216,7 +1217,13 @@ We can optionally emit configuration events, see
+ it.
  +
  ----------------
 -$ git config color.ui auto
@@ -77,7 +80,7 @@ index ddc0bfb9c9..534cfa98fa 100644
  ----------------
  +
  Then, mark the config `color.ui` as "interesting" config with
-@@ -1233,11 +1240,13 @@ $ cat ~/log.perf
+@@ -1232,11 +1239,13 @@ $ cat ~/log.perf
  d0 | main                     | version      |     |           |           |              | ...
  d0 | main                     | start        |     |  0.001642 |           |              | /usr/local/bin/git version
  d0 | main                     | cmd_name     |     |           |           |              | version (version)
