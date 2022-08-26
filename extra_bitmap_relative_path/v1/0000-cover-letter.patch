@@ -1,0 +1,42 @@
+From 1591e7ee52ea2d73a8d11082c7335fe074f6572e Mon Sep 17 00:00:00 2001
+From: Teng Long <dyroneteng@gmail.com>
+Date: Fri, 26 Aug 2022 14:38:44 +0800
+Subject: [PATCH 0/1] pack-bitmap.c: avoid exposing absolute paths
+
+This patch tries to avoid the problem of leaking sensitive information that
+could output the absolute path of the repository when try to open multiple
+bitmaps. For example, in "alternates" scenario, where the repository
+"alternate_repo" serves as alternate object stores for repository
+"want_to_borrow" , and each of both has it's own bitmap file, then we run
+`git rev-list --use-bitmap-index HEAD`, the output might be:
+
+  $ cd want_to_borrow.git
+  $ git rev-list --test-bitmap HEAD
+  warning: ignoring extra bitmap file: /Users/tenglong.tl/Downloads/alternate_repo.git/.git/objects/pack/pack-bff67e2a7a154e6933afe61b3681726cf9bd8e8b.pack
+  Bitmap v1 test (1 entries loaded)
+  Found bitmap for 30f146d41a7a86930fae3f4a5e1f1c1f2bfacbba. 64 bits / 11030517 checksum
+  Verifying bitmap entries: 100% (3/3), done.
+  OK!
+
+After apply this patch:
+
+  $ git rev-list --test-bitmap HEAD
+  warning: ignoring extra bitmap files
+  Bitmap v1 test (1 entries loaded)
+  Found bitmap for 30f146d41a7a86930fae3f4a5e1f1c1f2bfacbba. 64 bits / 11030517 checksum
+  Verifying bitmap entries: 100% (3/3), done.
+  OK!
+
+Thanks.
+
+Teng Long (1):
+  pack-bitmap.c: avoid exposing absolute paths
+
+ pack-bitmap.c                 | 8 ++++----
+ t/t5310-pack-bitmaps.sh       | 2 +-
+ t/t5326-multi-pack-bitmaps.sh | 2 +-
+ 3 files changed, 6 insertions(+), 6 deletions(-)
+
+-- 
+2.37.2.1.g1591e7ee52e
+
