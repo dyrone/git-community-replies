@@ -1,0 +1,43 @@
+From 4156a0727675acd5bd76e80c8bedbe3ddcbaf13d Mon Sep 17 00:00:00 2001
+From: Teng Long <dyroneteng@gmail.com>
+Date: Mon, 5 Sep 2022 20:21:19 +0800
+Subject: [RFC PATCH] bundle-uri: prevents infinite loop when unbundling
+
+We will try to unbundle all bundles when download work is done, then we
+use "last_success_count" and "ctx.success_count" to do retries util all
+unbundles succeed. However, if something unexpected happens, such as a
+bundle file is corrupt, which may cause an infinite loop here, let's add
+a maximum number of attempts to complete the protection in this case.
+
+Signed-off-by: Teng Long <dyroneteng@gmail.com>
+---
+ bundle-uri.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/bundle-uri.c b/bundle-uri.c
+index 37867afca2..ab07329f26 100644
+--- a/bundle-uri.c
++++ b/bundle-uri.c
+@@ -494,6 +494,7 @@ static int unbundle_all_bundles(struct repository *r,
+ 				struct bundle_list *list)
+ {
+ 	int last_success_count = -1;
++	int attempt_count = 0;
+ 	struct attempt_unbundle_context ctx = {
+ 		.r = r,
+ 	};
+@@ -503,8 +504,10 @@ static int unbundle_all_bundles(struct repository *r,
+ 	 * successfully unbundle. If any succeed, then perhaps another
+ 	 * will succeed in the next attempt.
+ 	 */
+-	while (last_success_count < ctx.success_count) {
++	while (attempt_count <= list->bundles.private_size &&
++	       last_success_count < ctx.success_count) {
+ 		last_success_count = ctx.success_count;
++		attempt_count++;
+ 
+ 		ctx.success_count = 0;
+ 		ctx.failure_count = 0;
+-- 
+2.37.1.235.g7b45c06cc9e.dirty
+
