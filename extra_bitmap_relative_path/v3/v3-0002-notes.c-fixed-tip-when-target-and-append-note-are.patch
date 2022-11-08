@@ -1,0 +1,84 @@
+From e7205ac0a4026158602f29e77b37460f5ffae149 Mon Sep 17 00:00:00 2001
+Message-Id: <e7205ac0a4026158602f29e77b37460f5ffae149.1667827101.git.dyroneteng@gmail.com>
+In-Reply-To: <cover.1667827101.git.dyroneteng@gmail.com>
+References: <cover.1667827101.git.dyroneteng@gmail.com>
+From: Teng Long <dyroneteng@gmail.com>
+Date: Tue, 11 Oct 2022 20:31:23 +0800
+Subject: [PATCH v3 2/3] notes.c: fixed tip when target and append note are
+ both empty
+
+When "git notes append <object>" is executed, if there is no note in
+the given object and the appended note is empty, the command line
+prompt will be as follows:
+
+     "Removing note for object <object>"
+
+Actually, this tip is not that accurate, because there is no note in
+the original <object>, and it also does no remove work on the notes
+reference, so let's fix this and give the correct tip.
+
+Signed-off-by: Teng Long <dyroneteng@gmail.com>
+---
+ builtin/notes.c  | 17 ++++++++++++++---
+ t/t3301-notes.sh |  3 ++-
+ 2 files changed, 16 insertions(+), 4 deletions(-)
+
+diff --git a/builtin/notes.c b/builtin/notes.c
+index f0fa337e8c..02b88e54d8 100644
+--- a/builtin/notes.c
++++ b/builtin/notes.c
+@@ -567,9 +567,15 @@ static int append_edit(int argc, const char **argv, const char *prefix)
+ 	struct notes_tree *t;
+ 	struct object_id object, new_note;
+ 	const struct object_id *note;
+-	char *logmsg;
++	char *logmsg = NULL;
+ 	const char * const *usage;
+-	struct note_data d = { 0, 0, NULL, STRBUF_INIT };
++	struct note_data d = {
++		.given = 0,
++		.use_editor = 0,
++		.edit_path = NULL,
++		.buf = STRBUF_INIT
++	};
++
+ 	struct option options[] = {
+ 		OPT_CALLBACK_F('m', "message", &d, N_("message"),
+ 			N_("note contents as a string"), PARSE_OPT_NONEG,
+@@ -634,13 +640,18 @@ static int append_edit(int argc, const char **argv, const char *prefix)
+ 		if (add_note(t, &object, &new_note, combine_notes_overwrite))
+ 			BUG("combine_notes_overwrite failed");
+ 		logmsg = xstrfmt("Notes added by 'git notes %s'", argv[0]);
++		commit_notes(the_repository, t, logmsg);
++	} else if (!d.buf.len && !note) {
++		fprintf(stderr,
++			_("Both original and appended notes are empty in %s, do nothing\n"),
++			oid_to_hex(&object));
+ 	} else {
+ 		fprintf(stderr, _("Removing note for object %s\n"),
+ 			oid_to_hex(&object));
+ 		remove_note(t, object.hash);
+ 		logmsg = xstrfmt("Notes removed by 'git notes %s'", argv[0]);
++		commit_notes(the_repository, t, logmsg);
+ 	}
+-	commit_notes(the_repository, t, logmsg);
+ 
+ 	free(logmsg);
+ 	free_note_data(&d);
+diff --git a/t/t3301-notes.sh b/t/t3301-notes.sh
+index 76beafdeb8..1a0fd157a5 100755
+--- a/t/t3301-notes.sh
++++ b/t/t3301-notes.sh
+@@ -574,7 +574,8 @@ test_expect_success 'git notes append == add when there is no existing note' '
+ test_expect_success 'appending empty string to non-existing note does not create note' '
+ 	git notes remove HEAD &&
+ 	test_must_fail git notes list HEAD &&
+-	git notes append -m "" &&
++	git notes append -m "" >output 2>&1 &&
++	grep "Both original and appended notes are empty" output &&
+ 	test_must_fail git notes list HEAD
+ '
+ 
+-- 
+2.38.1.383.ge7205ac0a40.dirty
+

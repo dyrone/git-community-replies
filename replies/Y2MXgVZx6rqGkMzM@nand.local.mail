@@ -1,0 +1,16 @@
+Subject: Re: [PATCH v2 0/1] pack-bitmap.c: avoid exposing absolute paths
+
+Taylor Blau <me@ttaylorr.com> writes:
+
+> This is based on a somewhat out-of-date version of the pack-bitmap.c
+> code which has changed quite a bit since Abhradeep Chakraborty worked on
+> it over the summer.
+>
+> Resolving the merge conflicts during am wasn't too hard, and my rerere
+> cache should save me from having to do it again. But if you don't mind
+> rebasing on the tip of 'master' before sending the next round, that
+> would be appreciated.
+
+Sorry for that, I will do rebase on 'master' before sending v3.
+
+Thanks.

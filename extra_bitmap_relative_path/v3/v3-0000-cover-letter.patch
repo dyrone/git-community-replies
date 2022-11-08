@@ -1,0 +1,26 @@
+From 12badb6290c06af6eacca4d72457705ca4fd4446 Mon Sep 17 00:00:00 2001
+Message-Id: <cover.1667827101.git.dyroneteng@gmail.com>
+From: Teng Long <dyroneteng@gmail.com>
+Date: Mon, 7 Nov 2022 21:18:21 +0800
+Subject: [PATCH v3 0/3] *** SUBJECT HERE ***
+
+*** BLURB HERE ***
+
+Teng Long (3):
+  notes.c: introduce "--no-blank-line" option
+  notes.c: fixed tip when target and append note are both empty
+  notes.c: drop unreachable code in "append_edit()"
+
+ Documentation/git-notes.txt | 11 +++++++++--
+ builtin/notes.c             | 27 +++++++++++++++++++--------
+ t/t3301-notes.sh            | 15 ++++++++++++++-
+ 3 files changed, 42 insertions(+), 11 deletions(-)
+
+Range-diff against v2:
+1:  1591e7ee52 < -:  ---------- pack-bitmap.c: avoid exposing absolute paths
+-:  ---------- > 1:  ee2259de8b notes.c: introduce "--no-blank-line" option
+-:  ---------- > 2:  e7205ac0a4 notes.c: fixed tip when target and append note are both empty
+-:  ---------- > 3:  12badb6290 notes.c: drop unreachable code in "append_edit()"
+-- 
+2.38.1.383.ge7205ac0a40.dirty
+
