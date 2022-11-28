@@ -1,0 +1,18 @@
+Subject: Re: [PATCH v4 4/4] pack-bitmap.c: trace bitmap ignore logs when midx-bitmap is found
+
+Junio C Hamano <gitster@pobox.com> write:
+
+> Thanks for all these good suggestions.
+>
+> As you pointed out, the first two seems to be identical to what
+> Taylor queued in 'next' already (so they do not have to be re-sent
+> but it is not a huge deal if they did---it would be a huge deal if
+> they were rewritten, though), and both of the two follow-on patches
+> make sense with suggested (minor) updates.  I'll expect a reroll
+> before queuing these two and mark the topic in 'next' to be waiting
+> for them.
+
+Sorry, Not online for a few days last week.
+Will send a reroll today.
+
+Thanks.
