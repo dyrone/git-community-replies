@@ -1,0 +1,62 @@
+From 0d8ce0b14b0c956c33c99e9160a4752ef7bd7df4 Mon Sep 17 00:00:00 2001
+Message-Id: <0d8ce0b14b0c956c33c99e9160a4752ef7bd7df4.1667980450.git.dyroneteng@gmail.com>
+In-Reply-To: <cover.1667980450.git.dyroneteng@gmail.com>
+References: <cover.1667980450.git.dyroneteng@gmail.com>
+From: Teng Long <dyroneteng@gmail.com>
+Date: Tue, 11 Oct 2022 20:31:23 +0800
+Subject: [PATCH v3 4/5] notes.c: provide tips when target and append note are
+ both empty
+
+When "git notes append <object>" is executed, if there is no note in
+the given object and the appended note is empty too, we could print
+the exact tips to end-user.
+
+Signed-off-by: Teng Long <dyroneteng@gmail.com>
+---
+ builtin/notes.c  | 5 ++++-
+ t/t3301-notes.sh | 5 +++--
+ 2 files changed, 7 insertions(+), 3 deletions(-)
+
+diff --git a/builtin/notes.c b/builtin/notes.c
+index 8c3a1cd913..a6273781fb 100644
+--- a/builtin/notes.c
++++ b/builtin/notes.c
+@@ -631,7 +631,10 @@ static int append_edit(int argc, const char **argv, const char *prefix)
+ 			BUG("combine_notes_overwrite failed");
+ 		logmsg = xstrfmt("Notes added by 'git notes %s'", argv[0]);
+ 		commit_notes(the_repository, t, logmsg);
+-	}
++	} else if (!d.buf.len && !note)
++		fprintf(stderr,
++			_("Both original and appended notes are empty in %s, do nothing\n"),
++			oid_to_hex(&object));
+ 
+ 	free(logmsg);
+ 	free_note_data(&d);
+diff --git a/t/t3301-notes.sh b/t/t3301-notes.sh
+index 3288aaec7d..e7807e052a 100755
+--- a/t/t3301-notes.sh
++++ b/t/t3301-notes.sh
+@@ -552,6 +552,7 @@ test_expect_success 'appending empty string does not change existing note' '
+ '
+ 
+ test_expect_success 'git notes append == add when there is no existing note' '
++	test_when_finished git notes remove HEAD &&
+ 	git notes remove HEAD &&
+ 	test_must_fail git notes list HEAD &&
+ 	git notes append -m "Initial set of notes${LF}${LF}More notes appended with git notes append" &&
+@@ -560,9 +561,9 @@ test_expect_success 'git notes append == add when there is no existing note' '
+ '
+ 
+ test_expect_success 'appending empty string to non-existing note does not create note' '
+-	git notes remove HEAD &&
+ 	test_must_fail git notes list HEAD &&
+-	git notes append -m "" &&
++	git notes append -m "" >output 2>&1 &&
++	grep "Both original and appended notes are empty" output &&
+ 	test_must_fail git notes list HEAD
+ '
+ 
+-- 
+2.38.1.386.g196e80358e8
+

@@ -1,0 +1,33 @@
+From 8ae58934a1d98fa2bb5b9383d32b72ddd1855eb9 Mon Sep 17 00:00:00 2001
+Message-Id: <8ae58934a1d98fa2bb5b9383d32b72ddd1855eb9.1667980450.git.dyroneteng@gmail.com>
+In-Reply-To: <cover.1667980450.git.dyroneteng@gmail.com>
+References: <cover.1667980450.git.dyroneteng@gmail.com>
+From: Teng Long <dyroneteng@gmail.com>
+Date: Tue, 8 Nov 2022 14:35:56 +0800
+Subject: [PATCH v3 1/5] notes.c: cleanup 'strbuf_grow' call in 'append_edit'
+
+Let's cleanup the unnecessary 'strbuf_grow' call in 'append_edit'. This
+"strbuf_grow(&d.buf, size + 1);" is prepared for insert a blank line if
+needed, but actually when inserting, "strbuf_insertstr(&d.buf, 0,
+"\n");" will do the "grow" for us.
+
+Signed-off-by: Teng Long <dyroneteng@gmail.com>
+---
+ builtin/notes.c | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/builtin/notes.c b/builtin/notes.c
+index be51f69225..f4bab3b2f2 100644
+--- a/builtin/notes.c
++++ b/builtin/notes.c
+@@ -618,7 +618,6 @@ static int append_edit(int argc, const char **argv, const char *prefix)
+ 		enum object_type type;
+ 		char *prev_buf = read_object_file(note, &type, &size);
+ 
+-		strbuf_grow(&d.buf, size + 1);
+ 		if (d.buf.len && prev_buf && size)
+ 			strbuf_insertstr(&d.buf, 0, "\n");
+ 		if (prev_buf && size)
+-- 
+2.38.1.386.g196e80358e8
+

@@ -1,0 +1,78 @@
+From 28306b7e8d560f48d3546527c1f60f5126eeb8a1 Mon Sep 17 00:00:00 2001
+Message-Id: <cover.1669644101.git.dyroneteng@gmail.com>
+From: Teng Long <dyroneteng@gmail.com>
+Date: Mon, 28 Nov 2022 22:01:41 +0800
+Subject: [PATCH v5 0/4] pack-bitmap.c: avoid exposing absolute paths 
+
+Changes since v4:
+
+* [3/4] Reroll the commit message.
+* [4/4] Reroll the commit message and remove the initialization of 'found'.
+
+Besides of 3/4 and 4/4, the 1/4 and 2/4 seem already in 'next' as
+8ddc06631b184e6f43051f7ea8ac9bbc86817127 and
+2aa84d5f3ea1966a81477ad31bee0136e39d3917 , but I send again here just for
+the completeness of the patchset, I think it will be nice to merge Peff's
+commits of there are no new suggestions.
+
+Thanks.
+
+Jeff King (2):
+  pack-bitmap.c: break out of the bitmap loop early if not tracing
+  pack-bitmap.c: trace bitmap ignore logs when midx-bitmap is found
+
+Teng Long (2):
+  pack-bitmap.c: remove unnecessary "open_pack_index()" calls
+  pack-bitmap.c: avoid exposing absolute paths
+
+ pack-bitmap.c           | 39 ++++++++++++++++++++++++++-------------
+ t/t5310-pack-bitmaps.sh |  5 +++--
+ 2 files changed, 29 insertions(+), 15 deletions(-)
+
+Range-diff against v4:
+-:  ---------- > 1:  aaeb021538 pack-bitmap.c: remove unnecessary "open_pack_index()" calls
+-:  ---------- > 2:  9d5a491887 pack-bitmap.c: avoid exposing absolute paths
+1:  f6c5b45bdc ! 3:  22deec6aab pack-bitmap.c: break out of the bitmap loop early if not tracing
+    @@ Metadata
+      ## Commit message ##
+         pack-bitmap.c: break out of the bitmap loop early if not tracing
+     
+    -    When we successfully open a bitmap, we will continue to try to open
+    -    other packs, and when trace2 is enabled, we will report any subsequent
+    -    bitmap ignored information in the log. So when we find that trace2 is
+    -    not enabled, we can actually terminate the loop early.
+    +    After opening a bitmap successfully, we try opening others only
+    +    because we want to report that other bitmap files are ignored in
+    +    the trace2 log.  When trace2 is not enabled, we do not have to
+    +    do any of that.
+     
+         Signed-off-by: Jeff King <peff@peff.net>
+         Signed-off-by: Teng Long <dyroneteng@gmail.com>
+2:  2acaa3f097 ! 4:  28306b7e8d pack-bitmap.c: trace bitmap ignore logs when midx-bitmap is found
+    @@ Metadata
+      ## Commit message ##
+         pack-bitmap.c: trace bitmap ignore logs when midx-bitmap is found
+     
+    -    We retained pack bitmaps as a quick recovery mechanism while
+    -    test-deploying midx bitmaps. This is an internal mechanism, and we
+    -    want to expose this rule externally through trace2 so that end users,
+    -    repo-maintainers, and debuggers know what is happening in the process.
+    +    When we find a midx bitmap, we do not bother checking for pack
+    +    bitmaps, since we can use only one. But since we will warn of unused
+    +    bitmaps via trace2, let's continue looking for pack bitmaps when
+    +    tracing is enabled.
+     
+         Signed-off-by: Jeff King <peff@peff.net>
+         Signed-off-by: Teng Long <dyroneteng@gmail.com>
+    @@ pack-bitmap.c: static int open_midx_bitmap(struct repository *r,
+      static int open_bitmap(struct repository *r,
+      		       struct bitmap_index *bitmap_git)
+      {
+    -+	int found = 0;
+    ++	int found;
+     +
+      	assert(!bitmap_git->map);
+      
+-- 
+2.38.1.385.g28306b7e8d5
+

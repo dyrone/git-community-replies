@@ -42,5 +42,3 @@ The current doc add the content about this circumstance corresponing to this
 Yes, I agree, will fix (although if we replace it by "test_when_finished,
 because of the dependency of the previous repo status, execute
 `sh t3301-notes.sh --run=60` also failed).
-
-Thanks.

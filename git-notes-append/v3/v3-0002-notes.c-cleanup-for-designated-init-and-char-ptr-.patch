@@ -1,0 +1,39 @@
+From a53576ea880b00c9225f0d0855c7e357edda789c Mon Sep 17 00:00:00 2001
+Message-Id: <a53576ea880b00c9225f0d0855c7e357edda789c.1667980450.git.dyroneteng@gmail.com>
+In-Reply-To: <cover.1667980450.git.dyroneteng@gmail.com>
+References: <cover.1667980450.git.dyroneteng@gmail.com>
+From: Teng Long <dyroneteng@gmail.com>
+Date: Tue, 8 Nov 2022 16:20:10 +0800
+Subject: [PATCH v3 2/5] notes.c: cleanup for "designated init" and "char ptr
+ init"
+
+Let's do some cleanup for the following two places in "append_edit()".
+
+The first place is "char *logmsg;" need to be initialized with NULL.
+The second place is "struct note_data d = { 0, 0, NULL, STRBUF_INIT };"
+could be replaced with designated init format.
+
+Signed-off-by: Teng Long <dyroneteng@gmail.com>
+---
+ builtin/notes.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/builtin/notes.c b/builtin/notes.c
+index f4bab3b2f2..485439c901 100644
+--- a/builtin/notes.c
++++ b/builtin/notes.c
+@@ -566,9 +566,9 @@ static int append_edit(int argc, const char **argv, const char *prefix)
+ 	struct notes_tree *t;
+ 	struct object_id object, new_note;
+ 	const struct object_id *note;
+-	char *logmsg;
++	char *logmsg = NULL;
+ 	const char * const *usage;
+-	struct note_data d = { 0, 0, NULL, STRBUF_INIT };
++	struct note_data d = { .buf = STRBUF_INIT };
+ 	struct option options[] = {
+ 		OPT_CALLBACK_F('m', "message", &d, N_("message"),
+ 			N_("note contents as a string"), PARSE_OPT_NONEG,
+-- 
+2.38.1.386.g196e80358e8
+

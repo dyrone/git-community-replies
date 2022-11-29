@@ -1,25 +1,27 @@
-From ee2259de8b6a7129fe298faa5a1ddb6b73a0b922 Mon Sep 17 00:00:00 2001
-Message-Id: <ee2259de8b6a7129fe298faa5a1ddb6b73a0b922.1667827101.git.dyroneteng@gmail.com>
-In-Reply-To: <cover.1667827101.git.dyroneteng@gmail.com>
-References: <cover.1667827101.git.dyroneteng@gmail.com>
+From 196e80358e80c8904cd21e6d8fca2223af93f842 Mon Sep 17 00:00:00 2001
+Message-Id: <196e80358e80c8904cd21e6d8fca2223af93f842.1667980450.git.dyroneteng@gmail.com>
+In-Reply-To: <cover.1667980450.git.dyroneteng@gmail.com>
+References: <cover.1667980450.git.dyroneteng@gmail.com>
 From: Teng Long <dyroneteng@gmail.com>
 Date: Tue, 11 Oct 2022 19:49:51 +0800
-Subject: [PATCH v3 1/3] notes.c: introduce "--no-blank-line" option
+Subject: [PATCH v3 5/5] notes.c: introduce "--no-blank-line" option
 
 When appending to a given object which has note and if the appended
 note is not empty too, we will insert a blank line at first. The
 blank line serves as a split line, but sometimes we just want to
-omit it then append on the heels of the target note.
+omit it then append on the heels of the target note. So, we add
+a new "OPT_BOOL()" option to determain whether a new blank line
+is insert at first.
 
 Signed-off-by: Teng Long <dyroneteng@gmail.com>
 ---
- Documentation/git-notes.txt | 11 +++++++++--
+ Documentation/git-notes.txt | 10 ++++++++--
  builtin/notes.c             |  5 ++++-
- t/t3301-notes.sh            | 12 ++++++++++++
+ t/t3301-notes.sh            | 13 +++++++++++++
  3 files changed, 25 insertions(+), 3 deletions(-)
 
 diff --git a/Documentation/git-notes.txt b/Documentation/git-notes.txt
-index efbc10f0f5..43770ddf84 100644
+index efbc10f0f5..50b198c2b2 100644
 --- a/Documentation/git-notes.txt
 +++ b/Documentation/git-notes.txt
 @@ -11,7 +11,7 @@ SYNOPSIS
@@ -27,7 +29,7 @@ index efbc10f0f5..43770ddf84 100644
  'git notes' add [-f] [--allow-empty] [-F <file> | -m <msg> | (-c | -C) <object>] [<object>]
  'git notes' copy [-f] ( --stdin | <from-object> [<to-object>] )
 -'git notes' append [--allow-empty] [-F <file> | -m <msg> | (-c | -C) <object>] [<object>]
-+'git notes' append [--allow-empty] [--blank-line] [-F <file> | -m <msg> | (-c | -C) <object>] [<object>]
++'git notes' append [--allow-empty] [--no-blank-line] [-F <file> | -m <msg> | (-c | -C) <object>] [<object>]
  'git notes' edit [--allow-empty] [<object>]
  'git notes' show [<object>]
  'git notes' merge [-v | -q] [-s <strategy> ] <notes-ref>
@@ -42,20 +44,19 @@ index efbc10f0f5..43770ddf84 100644
  
  edit::
  	Edit the notes for a given object (defaults to HEAD).
-@@ -159,6 +161,11 @@ OPTIONS
+@@ -159,6 +161,10 @@ OPTIONS
  	Allow an empty note object to be stored. The default behavior is
  	to automatically remove empty notes.
  
-+--blank-line::
 +--no-blank-line::
-+	Controls if a blank line to split paragraphs is inserted
-+	when appending (the default is true).
++	Do not insert a blank line before the inserted notes (insert
++	a blank line is the default).
 +
  --ref <ref>::
  	Manipulate the notes tree in <ref>.  This overrides
  	`GIT_NOTES_REF` and the "core.notesRef" configuration.  The ref
 diff --git a/builtin/notes.c b/builtin/notes.c
-index be51f69225..f0fa337e8c 100644
+index a6273781fb..f38e6e8b04 100644
 --- a/builtin/notes.c
 +++ b/builtin/notes.c
 @@ -562,6 +562,7 @@ static int copy(int argc, const char **argv, const char *prefix)
@@ -75,24 +76,25 @@ index be51f69225..f0fa337e8c 100644
  		OPT_END()
  	};
  	int edit = !strcmp(argv[0], "edit");
-@@ -619,7 +622,7 @@ static int append_edit(int argc, const char **argv, const char *prefix)
+@@ -618,7 +621,7 @@ static int append_edit(int argc, const char **argv, const char *prefix)
+ 		enum object_type type;
  		char *prev_buf = read_object_file(note, &type, &size);
  
- 		strbuf_grow(&d.buf, size + 1);
 -		if (d.buf.len && prev_buf && size)
 +		if (blankline && d.buf.len && prev_buf && size)
  			strbuf_insertstr(&d.buf, 0, "\n");
  		if (prev_buf && size)
  			strbuf_insert(&d.buf, 0, prev_buf, size);
 diff --git a/t/t3301-notes.sh b/t/t3301-notes.sh
-index 3288aaec7d..76beafdeb8 100755
+index e7807e052a..dedad93a2f 100755
 --- a/t/t3301-notes.sh
 +++ b/t/t3301-notes.sh
-@@ -521,12 +521,24 @@ test_expect_success 'listing non-existing notes fails' '
+@@ -521,12 +521,25 @@ test_expect_success 'listing non-existing notes fails' '
  	test_must_be_empty actual
  '
  
 +test_expect_success 'append to existing note without a beginning blank line' '
++	test_when_finished git notes remove HEAD &&
 +	cat >expect <<-\EOF &&
 +		Initial set of notes
 +		Appended notes
@@ -109,10 +111,10 @@ index 3288aaec7d..76beafdeb8 100755
  
  		More notes appended with git notes append
  	EOF
-+	git notes remove HEAD &&
++
  	git notes add -m "Initial set of notes" &&
  	git notes append -m "More notes appended with git notes append" &&
  	git notes show >actual &&
 -- 
-2.38.1.383.ge7205ac0a40.dirty
+2.38.1.386.g196e80358e8
 

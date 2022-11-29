@@ -1,0 +1,29 @@
+From f1d108cc353bd1d94c994e994c97135ff3f285f1 Mon Sep 17 00:00:00 2001
+From: Teng Long <dyroneteng@gmail.com>
+Date: Mon, 14 Nov 2022 11:58:20 +0800
+Subject: [RFC PATCH 1/6] ls-tree: cleanup the redundant SPACE
+
+An redundant space was found in ls-tree.c, which is no doubt
+a small change, but it might be OK to make a commit on its own.
+
+Signed-off-by: Teng Long <dyroneteng@gmail.com>
+---
+ builtin/ls-tree.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/builtin/ls-tree.c b/builtin/ls-tree.c
+index c3ea09281af..8256fc0bc97 100644
+--- a/builtin/ls-tree.c
++++ b/builtin/ls-tree.c
+@@ -32,7 +32,7 @@ struct show_tree_data {
+ 	struct strbuf *base;
+ };
+ 
+-static const  char * const ls_tree_usage[] = {
++static const char * const ls_tree_usage[] = {
+ 	N_("git ls-tree [<options>] <tree-ish> [<path>...]"),
+ 	NULL
+ };
+-- 
+2.38.1.426.g770fc8806cb.dirty
+

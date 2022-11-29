@@ -1,0 +1,45 @@
+From 62a952ba3e7ad8599495119723b0fcd7044c819e Mon Sep 17 00:00:00 2001
+Message-Id: <62a952ba3e7ad8599495119723b0fcd7044c819e.1667980450.git.dyroneteng@gmail.com>
+In-Reply-To: <cover.1667980450.git.dyroneteng@gmail.com>
+References: <cover.1667980450.git.dyroneteng@gmail.com>
+From: Teng Long <dyroneteng@gmail.com>
+Date: Tue, 8 Nov 2022 17:46:55 +0800
+Subject: [PATCH v3 3/5] notes.c: drop unreachable code in 'append_edit()'
+
+Situation of note "removing" shouldn't happen in 'append_edit()',
+unless it's a bug. So, let's drop the unreachable "else" code
+in "append_edit()".
+
+The notes operation "append" is different with "add", the latter
+supports to overwrite the existing note then let the "removing"
+happen (e.g. execute `git notes add -f -F /dev/null` on an existing
+note), but the former will not because it only does "appends" but
+not doing "overwrites".
+
+Signed-off-by: Teng Long <dyroneteng@gmail.com>
+---
+ builtin/notes.c | 7 +------
+ 1 file changed, 1 insertion(+), 6 deletions(-)
+
+diff --git a/builtin/notes.c b/builtin/notes.c
+index 485439c901..8c3a1cd913 100644
+--- a/builtin/notes.c
++++ b/builtin/notes.c
+@@ -630,13 +630,8 @@ static int append_edit(int argc, const char **argv, const char *prefix)
+ 		if (add_note(t, &object, &new_note, combine_notes_overwrite))
+ 			BUG("combine_notes_overwrite failed");
+ 		logmsg = xstrfmt("Notes added by 'git notes %s'", argv[0]);
+-	} else {
+-		fprintf(stderr, _("Removing note for object %s\n"),
+-			oid_to_hex(&object));
+-		remove_note(t, object.hash);
+-		logmsg = xstrfmt("Notes removed by 'git notes %s'", argv[0]);
++		commit_notes(the_repository, t, logmsg);
+ 	}
+-	commit_notes(the_repository, t, logmsg);
+ 
+ 	free(logmsg);
+ 	free_note_data(&d);
+-- 
+2.38.1.386.g196e80358e8
+

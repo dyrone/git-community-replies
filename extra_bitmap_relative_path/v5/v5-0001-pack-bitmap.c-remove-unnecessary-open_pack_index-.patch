@@ -1,0 +1,50 @@
+From aaeb021538cdfeb83dc6004fe7b3ac35a23aef49 Mon Sep 17 00:00:00 2001
+Message-Id: <aaeb021538cdfeb83dc6004fe7b3ac35a23aef49.1669644101.git.dyroneteng@gmail.com>
+In-Reply-To: <cover.1669644101.git.dyroneteng@gmail.com>
+References: <cover.1669644101.git.dyroneteng@gmail.com>
+From: Teng Long <dyroneteng@gmail.com>
+Date: Thu, 3 Nov 2022 16:12:45 +0800
+Subject: [PATCH v5 1/4] pack-bitmap.c: remove unnecessary "open_pack_index()"
+ calls
+
+When trying to open a pack bitmap, we call open_pack_bitmap_1() in a
+loop, during which it tries to open up the pack index corresponding
+with each available pack.
+
+It's likely that we'll end up relying on objects in that pack later
+in the process (in which case we're doing the work of opening the
+pack index optimistically), but not guaranteed.
+
+For instance, consider a repository with a large number of small
+packs, and one large pack with a bitmap. If we see that bitmap pack
+last in our loop which calls open_pack_bitmap_1(), the current code
+will have opened *all* pack index files in the repository. If the
+request can be served out of the bitmapped pack alone, then the time
+spent opening these idx files was wasted.S
+
+Since open_pack_bitmap_1() calls is_pack_valid() later on (which in
+turns calls open_pack_index() itself), we can just drop the earlier
+call altogether.
+
+Signed-off-by: Teng Long <dyroneteng@gmail.com>
+---
+ pack-bitmap.c | 3 ---
+ 1 file changed, 3 deletions(-)
+
+diff --git a/pack-bitmap.c b/pack-bitmap.c
+index 440407f1be..982e286bac 100644
+--- a/pack-bitmap.c
++++ b/pack-bitmap.c
+@@ -411,9 +411,6 @@ static int open_pack_bitmap_1(struct bitmap_index *bitmap_git, struct packed_git
+ 	struct stat st;
+ 	char *bitmap_name;
+ 
+-	if (open_pack_index(packfile))
+-		return -1;
+-
+ 	bitmap_name = pack_bitmap_filename(packfile);
+ 	fd = git_open(bitmap_name);
+ 
+-- 
+2.38.1.385.g28306b7e8d5
+
