@@ -1,0 +1,29 @@
+Subject: Re: [PATCH v5 3/4] pack-bitmap.c: break out of the bitmap loop early if not tracing
+
+Taylor Blau <me@ttaylorr.com> writes:
+
+> > diff --git a/pack-bitmap.c b/pack-bitmap.c
+> > index aaa2d9a104..3b6c2f804a 100644
+> > --- a/pack-bitmap.c
+> > +++ b/pack-bitmap.c
+> > @@ -527,8 +527,15 @@ static int open_pack_bitmap(struct repository *r,
+> >  	assert(!bitmap_git->map);
+> >
+> >  	for (p = get_all_packs(r); p; p = p->next) {
+> > -		if (open_pack_bitmap_1(bitmap_git, p) == 0)
+> > +		if (open_pack_bitmap_1(bitmap_git, p) == 0) {
+>
+> While we're here, we *could* change this line to read:
+>
+>     if (!open_pack_bitmap_1(bitmap_git, p))
+
+Feeling a bit sad why I didn't notice here.
+
+> which more closely adheres to our conventions. But I don't think just
+> because we could do something necessarily means that we have to, so I'm
+> happy to leave it alone, too. It definitely does not merit a reroll on
+> its own.
+>
+> Otherwise this patch looks quite reasonable.
+
+That's a good catch and thanks for your suggestion.
