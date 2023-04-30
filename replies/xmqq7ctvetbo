@@ -1,0 +1,29 @@
+Subject: Re: [RFC PATCH 0/1] push: introduce '--heads' option
+
+Junio C Hamano <gitster@pobox.com> writes:
+
+>Teng Long <dyroneteng@gmail.com> writes:
+>
+>> ZheNing Hu mentioned me that could use "OPT_ALIAS" instead, it seems
+>> like could be better than OPT_BIT in this scenario. If so, are problems
+>> that may arise from interactions shielded? If not, I'm willing to add
+>> extra test about it (some relevant advice if possible).
+>
+>The intent of ALIAS is to just add an extra option visible at the UI
+>level that behaves exactly the same as the other one at the code
+>level, so the codepath that is prepared to deal with one can handle
+>the other one without any extra effort.  In fact, after the option
+>parsing is finished, the rest of the code should not even be able to
+>tell which one, the original or the alias, was used on the command
+>line.
+>
+>And in this case, you'd want a new "push all branches" option that
+>behaves exactly like existing "--all", and possibly you may over
+>time want to deprecate the latter.  All the code to ensure how
+>"--all" should interact with other options should be working fine
+>(or if there is a bug, that needs to be corrected whether we would
+>add this alias or not).
+
+Make sense.
+
+Thanks.

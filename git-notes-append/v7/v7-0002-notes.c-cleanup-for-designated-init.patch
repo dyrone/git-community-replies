@@ -1,0 +1,41 @@
+From 9dc123c8f7a1cc2e7a146fb336939d6076369e2e Mon Sep 17 00:00:00 2001
+Message-Id: <9dc123c8f7a1cc2e7a146fb336939d6076369e2e.1680012650.git.dyroneteng@gmail.com>
+In-Reply-To: <cover.1680012650.git.dyroneteng@gmail.com>
+References: <cover.1680012650.git.dyroneteng@gmail.com>
+From: Teng Long <dyroneteng@gmail.com>
+Date: Wed, 1 Feb 2023 11:43:30 +0800
+Subject: [PATCH v7 2/4] notes.c: cleanup for "designated init"
+
+The "struct note_data d = { 0, 0, NULL, STRBUF_INIT };" style could be
+replaced with designated init format.
+
+Signed-off-by: Teng Long <dyroneteng@gmail.com>
+---
+ builtin/notes.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/builtin/notes.c b/builtin/notes.c
+index 23cb6f0d..553ae2bd 100644
+--- a/builtin/notes.c
++++ b/builtin/notes.c
+@@ -401,7 +401,7 @@ static int add(int argc, const char **argv, const char *prefix)
+ 	struct notes_tree *t;
+ 	struct object_id object, new_note;
+ 	const struct object_id *note;
+-	struct note_data d = { 0, 0, NULL, STRBUF_INIT };
++	struct note_data d = { .buf = STRBUF_INIT };
+ 	struct option options[] = {
+ 		OPT_CALLBACK_F('m', "message", &d, N_("message"),
+ 			N_("note contents as a string"), PARSE_OPT_NONEG,
+@@ -567,7 +567,7 @@ static int append_edit(int argc, const char **argv, const char *prefix)
+ 	const struct object_id *note;
+ 	char *logmsg;
+ 	const char * const *usage;
+-	struct note_data d = { 0, 0, NULL, STRBUF_INIT };
++	struct note_data d = { .buf = STRBUF_INIT };
+ 	struct option options[] = {
+ 		OPT_CALLBACK_F('m', "message", &d, N_("message"),
+ 			N_("note contents as a string"), PARSE_OPT_NONEG,
+-- 
+2.40.0.rc2.4.gb9d12f0c
+

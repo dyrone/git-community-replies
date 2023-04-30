@@ -1,0 +1,37 @@
+Subject: Re: [PATCH v8 5/6] notes.c: append separator instead of insert by pos
+
+Junio C Hamano <gitster@pobox.com> writes:
+
+>> From: Teng Long <dyroneteng@gmail.com>
+>>
+>> This commit rename "insert_separator" to "append_separator" and also
+>
+>"This commit rename" -> "Rename".
+>
+>...
+>
+>> The second is that when we execute the "git notes append" subcommand
+>> , we need to combine the "prev_note" and "current_note" to get the
+>
+>Funny placement of comma?
+>
+>> +static void append_separator(struct strbuf *message)
+>>  {
+>>  	if (!separator)
+>> -		strbuf_insertstr(message, pos, "\n");
+>> +		strbuf_insertstr(message, message->len, "\n");
+>>  	else if (separator[strlen(separator) - 1] == '\n')
+>> -		strbuf_insertstr(message, pos, separator);
+>> +		strbuf_insertstr(message, message->len, separator);
+>>  	else
+>> -		strbuf_insertf(message, pos, "%s%s", separator, "\n");
+>> +		strbuf_insertf(message, message->len, "%s%s", separator, "\n");
+>>  }
+>
+>Is it still needed to use strbuf_insert*() variants when the only
+>thing being done is to append at the end?  Use of strbuf_add*()
+>would let you drop message->len from the arguments.
+
+Will fix.
+
+Thanks.

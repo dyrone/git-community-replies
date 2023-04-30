@@ -1,0 +1,7 @@
+Subject: Re: t3206-range-diff failures on non x86 arches
+
+Todd Zullinger <tmz@pobox.com> writes:
+
+> Confirmed.  That fixes the tests.  Thanks!
+
+Sorry for the problem and thanks very much for reporting.

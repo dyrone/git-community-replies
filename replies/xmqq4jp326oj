@@ -1,0 +1,28 @@
+Subject: Re: [PATCH v8 6/6] notes.c: introduce "--[no-]stripspace" option
+
+>Teng Long <dyroneteng@gmail.com> writes:
+>
+>> From: Teng Long <dyroneteng@gmail.com>
+>>
+>> This commit introduces a new option "--[no-]stripspace" to git notes
+>> append, git notes edit, and git notes add. This option allows users to
+>> control whether the note message need to stripped out.
+>
+>Makes sense.
+>
+>>     ... One more thing need to note is "the order of
+>>     the options matter", that is, if you specify "-C" before "-m" or
+>>     "-F", the reused message by "-C" will be stripped out together,
+>>     because everytime concat "-m" or "-F" message, the concated message
+>>     will be stripped together. Oppositely, if you specify "-m" or "-F"
+>>     before "-C", the reused message by "-C" will not be stripped out.
+>
+>This sounds more like a design/implementation mistake that we may
+>want to fix.
+
+I doubted this either, but for compatibility, implementations of
+this patchset have been made, such as "note_msg" recording the
+"stripspace" field, to implement these two new options without
+breaking the old behavior.
+
+Thanks.

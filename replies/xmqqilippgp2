@@ -1,0 +1,31 @@
+Subject: Re: [RFC PATCH 0/1] push: introduce '--heads' option
+
+Junio C Hamano <gitster@pobox.com> writes:
+
+>My knee-jerk reaction is to avoid "--heads" and instead use
+>"--branches", if this is about pushing all local branches.  The
+>option "--heads" may still remain in some commands added to the
+>system in the earliest part of our history, but soon we started
+>to use "branch" over "head", as it is a more commonly used word.
+>
+>How should it interact with --follow-tags?  Just as if you listed
+>all local branch names on the command line?  I.e. is
+>
+>    git push $URL --heads
+>
+>equivalent to the long-hand
+>
+>    git push $URL $(git for-each-ref --format='%(refname)' refs/heads/\*)
+>
+>and because of that, does
+>
+>    git push $URL --any --other --option --heads
+>
+>behave identically to the long-hand with these other options added?
+
+ZheNing Hu mentioned me that could use "OPT_ALIAS" instead, it seems
+like could be better than OPT_BIT in this scenario. If so, are problems
+that may arise from interactions shielded? If not, I'm willing to add
+extra test about it (some relevant advice if possible).
+
+Thanks.

@@ -1,0 +1,76 @@
+Subject: Re: [PATCH v8 3/6] t3321: add test cases about the notes stripspace behavior
+
+Junio C Hamano <gitster@pobox.com> writes:
+
+>> ---
+>>  t/t3321-notes-stripspace.sh | 291 ++++++++++++++++++++++++++++++++++++
+>>  1 file changed, 291 insertions(+)
+>>  create mode 100755 t/t3321-notes-stripspace.sh
+>
+>Looks quite thorough.
+
+I'm not sure if I've covered everything, but I've tried to addi
+some basic test cases to give us a chance to add on top of that later.
+
+>> diff --git a/t/t3321-notes-stripspace.sh b/t/t3321-notes-stripspace.sh
+>> new file mode 100755
+>> index 00000000..7c26b184
+>> --- /dev/null
+>> +++ b/t/t3321-notes-stripspace.sh
+>> @@ -0,0 +1,291 @@
+>> +#!/bin/sh
+>> +#
+>> +# Copyright (c) 2007 Teng Long
+>
+>It's 2023 now.
+
+Will fix.
+
+>> +test_expect_success 'add note by editor' '
+>> +	test_when_finished "git notes remove" &&
+>> +	cat >expect <<-EOF &&
+>> +		first-line
+>> +
+>> +		second-line
+>> +	EOF
+>> ...
+>> +test_expect_success 'append note by specifying multiple "-m"' '
+>> +	test_when_finished "git notes remove" &&
+>> +	cat >expect <<-EOF &&
+>> +	first-line
+>> +
+>> +	second-line
+>> +	EOF
+>
+>Inconsistent indentation confuses readers if the author meant
+>something unexplained by the difference between the two.  Stick to
+>one style (I personally prefer the "indent to the same level as the
+>starting 'cat' and ending 'EOF'" but it is OK to pick the other one,
+>as long as it is consistent within a single test script).
+
+I will follow as your prefer format, thanks.
+
+>> +	cat >note-file <<-EOF &&
+>> +		${LF}
+>> +		first-line
+>> +		${MULTI_LF}
+>> +		second-line
+>> +		${LF}
+>> +	EOF
+>
+>This is a bit misleading, as there are TWO blank lines before the
+>"first-line" (one from the here text itself, the other is from
+>${LF}).  
+>
+>I do not think it matters too much, because the point of stripspace
+>is to remove any number of leading or trailing blank lines, and
+>squash one or more blank lines elsewhere into one, so having two
+>blank lines at the beginning or at the end of the file is just as
+>good an example as having a single blank line.  I am mentioning it
+>primarily because I had to spend some time thinking about ways to
+>make it less misleading.
+
+Yes, a little bit, I don't found a more clealy so far. It works for
+now but I'm willing to optimize if there's a better way.
+
+Thanks.

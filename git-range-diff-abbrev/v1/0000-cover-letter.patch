@@ -1,0 +1,20 @@
+From: Teng Long <dyroneteng@gmail.com>
+Date: Mon, 20 Feb 2023 22:14:56 +0800
+Subject: [PATCH 0/1] range-diff: let '--abbrev' option takes effect
+
+Let's support --abbrev in range-diff output.
+
+In some other sub-commands, there may be similar ineffective
+situations. If found, it will be continuously updated
+in subsequent patches.
+
+Teng Long (1):
+  range-diff: let '--abbrev' option takes effect
+
+ range-diff.c          | 11 +++++++----
+ t/t3206-range-diff.sh | 32 ++++++++++++++++++++++++++++++++
+ 2 files changed, 39 insertions(+), 4 deletions(-)
+
+-- 
+2.39.2.459.g1d9d282d
+

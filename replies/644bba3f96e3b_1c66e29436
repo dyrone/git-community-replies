@@ -1,0 +1,27 @@
+Subject: Re: [RFC PATCH 1/1] push: introduce '--heads' option
+
+Felipe Contreras <felipe.contreras@gmail.com> writes:
+
+> Teng Long wrote:
+>> From: Teng Long <dyroneteng@gmail.com>
+>> 
+>> The '--all' option of git-push built-in cmd support to push all branches
+>> (refs under refs/heads) to remote. Under the usage, a user can easlily
+>> work in some scenarios, for example, branches synchronization and batch
+>> upload.
+>> 
+>> '--all' was introduced for a long time, meanwhile, git supports to
+>> customize the storage location under "refs/". when a new git user see
+>> the usage like, 'git push origin --all', we might feel like we're
+>> pushing _all_ the refs instead of just branches without looking at the
+>> documents until we found the related description of it or '--mirror'.
+>
+>Completely agree.
+>
+>This is something I spotted a long time ago. Although I would prefer
+>`--branches` over `--heads`.
+
+I will cook this recently, maybe we need some well prepared test cases
+at first.
+
+Thanks.

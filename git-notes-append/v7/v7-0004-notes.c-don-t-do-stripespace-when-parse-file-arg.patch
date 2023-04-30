@@ -1,0 +1,59 @@
+From b9d12f0c5f31d11f89993e476d461fe3f13de705 Mon Sep 17 00:00:00 2001
+Message-Id: <b9d12f0c5f31d11f89993e476d461fe3f13de705.1680012650.git.dyroneteng@gmail.com>
+In-Reply-To: <cover.1680012650.git.dyroneteng@gmail.com>
+References: <cover.1680012650.git.dyroneteng@gmail.com>
+From: Teng Long <dyroneteng@gmail.com>
+Date: Tue, 28 Mar 2023 22:02:27 +0800
+Subject: [PATCH v7 4/4] notes.c: don't do stripespace when parse file arg
+
+The file maybe is a binary and it could contains multiple line
+breaks, if we do the stripespace on it's content, the notes will
+be different to the original content.
+
+The binary file as the notes maybe a rare scenario, but there're
+some related tests about it in t3307, so let's fix the problem
+and add a test in t3301.
+
+Signed-off-by: Teng Long <dyroneteng@gmail.com>
+---
+ builtin/notes.c  |  1 -
+ t/t3301-notes.sh | 10 +++++++++-
+ 2 files changed, 9 insertions(+), 2 deletions(-)
+
+diff --git a/builtin/notes.c b/builtin/notes.c
+index 94b69607..ade8fb73 100644
+--- a/builtin/notes.c
++++ b/builtin/notes.c
+@@ -274,7 +274,6 @@ static int parse_file_arg(const struct option *opt, const char *arg, int unset)
+ 			die_errno(_("cannot read '%s'"), arg);
+ 	} else if (strbuf_read_file(buf, arg, 1024) < 0)
+ 		die_errno(_("could not open or read '%s'"), arg);
+-	strbuf_stripspace(buf, 0);
+ 
+ 	// we will note stripspace the buf here, because the file maybe
+ 	// is a binary and it maybe contains multiple continuous line breaks.
+diff --git a/t/t3301-notes.sh b/t/t3301-notes.sh
+index 716192b5..2af318f5 100755
+--- a/t/t3301-notes.sh
++++ b/t/t3301-notes.sh
+@@ -192,8 +192,16 @@ test_expect_success 'show multi-line notes' '
+ 	test_cmp expect-multiline actual
+ '
+ 
+-test_expect_success 'show -F notes' '
++test_expect_success 'add -F notes with binary' '
++	test_when_finished "git notes remove" &&
+ 	test_commit 4th &&
++	cp "$TEST_DIRECTORY"/test-binary-1.png . &&
++	git notes add -F test-binary-1.png &&
++	git notes show >actual &&
++	test_cmp test-binary-1.png actual
++'
++
++test_expect_success 'show -F notes' '
+ 	echo "xyzzy" >note5 &&
+ 	git notes add -F note5 &&
+ 	commit=$(git rev-parse HEAD) &&
+-- 
+2.40.0.rc2.4.gb9d12f0c
+

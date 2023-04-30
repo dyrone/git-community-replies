@@ -1,0 +1,127 @@
+Subject: Re: [PATCH v8 4/6] notes.c: introduce '--separator=<paragraph-break>' option
+
+Junio C Hamano <gitster@pobox.com> writes:
+
+>> +	while (d->msg_nr) {
+>> +		--d->msg_nr;
+>> +		strbuf_release(&d->messages[d->msg_nr]->buf);
+>> +		free(d->messages[d->msg_nr]);
+>> +	}
+>
+>        while (d->msg_nr--) {
+>                strbuf_relesae(...);
+>                free(d->messages[d->msg_nr]);
+>        }
+
+Will fix or optimize.
+
+>> +static void concat_messages(struct note_data *d)
+>> +{
+>> +	struct strbuf msg = STRBUF_INIT;
+>> +
+>> +	size_t i;
+>> +	for (i = 0; i < d->msg_nr ; i++) {
+>> +		if (d->buf.len)
+>> +			insert_separator(&d->buf, d->buf.len);
+>> +		strbuf_add(&msg, d->messages[i]->buf.buf, d->messages[i]->buf.len);
+>> +		strbuf_addbuf(&d->buf, &msg);
+>> +		if (d->messages[i]->stripspace)
+>> +			strbuf_stripspace(&d->buf, 0);
+>> +		strbuf_reset(&msg);
+>> +	}
+>> +	strbuf_release(&msg);
+>> +}
+>
+>Interesting.  
+>
+>I would have expected that where we add to d->messages[] array a new
+>note_msg structure and set its .stripspace member, we already knew
+>if the associated strbuf needs to be stripspace'd and instead of
+>maintaining the .stripspace member for each note_msg, we can just
+>have it contain only a string (not even a strbuf).
+
+That's because the "-C" option, it will not do stripspace for the
+whole note, but support to use together with "-m" or "-F"(they will
+do stripspace). So, for the consistent result with backforward
+compatibility, we have to get the information about whether to do
+stripspace when concating each message.
+
+>The above loop, and the design to have .stripspace per each
+>note_msg, smell iffy to me for one thing.  The .stripspace member is
+>used to flag "after adding this element, the whole thing need to be
+>treated with stripspace".  Is it intended?  What it means is that if
+>you have two elements in d->messages[] array, one of them with and
+>the other one without the .stripspace bit set, depending on the
+>order of the elements, the result would be vastly different.  When
+>the later element has the stripspace bit set, everything gets
+>cleansed, but when the earlier element has it, only the earlier
+>element gets cleansed and the later element is added with multiple
+>blank lines and trailing whitespaces intact.  It does not sound
+>quite right.
+
+In the previous patch, I actually followed your suggestion to only
+stripspace message itself but not the whole concatenate message. But
+actually, there's a problem with this, in fact it's also caused by
+"-C", "-C" doesn't stripspace, means that when mixed with "-m" and
+"-F", the order of the options matters.
+
+I'm not sure if this is a design flaw or if it's intentional, but
+it's special about the stripspace handling of "-C" right now, which
+is why I've added two new test cases in [3/6], just to make sure my
+subsequent patches don't break them:
+
+    * 'add notes with "-C" and "-m", "-m" will stripspace all together'
+
+    * 'add notes with "-m" and "-C", "-C" will not stripspace all together'
+
+>I wonder if the semantics intended (not implemented) by this series
+>is to concatenate if none of the elements want stripspace and cleanse
+>the whitespaces if any of them want stripspace, in which case an
+>obvious implementation would be to just concatenate everything in
+>the loop with separators, while seeing if any of them have the
+>stripspace bit set, and then after the loop finishes, run stripspace
+>on the whole thing just once if any of d->messages[] asked for it?
+>If that is the case, an even better design could be to move the
+>stripspace bit out of d->messages[] and make it d->stripspace to
+>apply to the whole thing.
+
+I agree, but this seems to break the effect of "the order matters" because of
+the "-C" argument. 
+
+If we think that the "-C" particularity is a case that should be optimized or
+fixed(), then I strongly agree with this modification approach, and I think
+that compared to this particularity, on the one hand, our implementation
+is simple, on the other hand, users may find it easier to understand.
+
+>Another possiblity is to just stripspace the elements taken from the
+>source you want to stripspace (like "-m" and "-F" but not the ones
+>taken from parse_reuse_arg()) before you even add them to
+>d->messages[] array.  That way, the only possible source of multiple
+>blank lines and trailing whitespaces in the concatenation of
+>elements you want stripspace would be from the separator, which is
+>under control by the end user. ...
+
+I think this approach is feasible, and add judgment logic when supporting
+subsequent --[no-] stripspaces.
+
+>... So your concatenation could just
+>ignore running stripspace at all---if the user does (or does not)
+>want multiple blank lines or trailing whitespaces on the separator
+>line, that's under their control.  That sounds like the simplest and
+>cleanest design---we strip as we read from each source and make them
+>into simple strings to be kept in d->messages[] without having to
+>allocate and keep a strbuf per each source, and we concatenate just
+>once, without worrying about stripspace.
+
+The strbuf can record the "len" of the buf, to make sure the string
+will be cut of if the content contains '\0' in the middle, like a binary
+file. Maybe using a string could make that, but I‘m not sure how to solve
+it.
+
+>The simple approach may break when any of the elements ended up to
+>be truly empty, but then we can solve that by refraining to push an
+>empty result into d->messages[] array, or something?  I dunno.
+
+I will add some test cases about it and found it out.
+
+Thanks.
