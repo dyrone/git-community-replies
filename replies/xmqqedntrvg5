@@ -1,0 +1,11 @@
+Subject: Re: [PATCH 1/1] push: introduce '--branches' option
+
+Junio C Hamano <gitster@pobox.com> writes:
+
+>By the way, you may want to check and correct your patch sending
+>procedure.  Somebody in your toolchain is adding "--cc=" to the
+>first recipient address or something silly like that.
+
+My fault, thank you for mentioning that.
+
+Thanks.

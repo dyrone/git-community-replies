@@ -1,0 +1,65 @@
+Subject: Re: [PATCH v9 4/6] notes.c: introduce '--separator=<paragraph-break>' option
+
+Junio C Hamano <gitster@pobox.com> writes:
+
+>> +static char *separator = "\n";
+>
+>The only two ways this pointer gains a non-NULL value are with this
+>initialization and parsing the command line "--separator=<value>"
+>option with OPT_STRING().  Neither of them allocate new storage but
+>points an existing string that we do not "own" (and cannot free)
+>with the pointer.  So it probably is safer to make it a pointer to a
+>const string, i.e.
+>
+>	static const char *separator = "\n";
+>
+>> @@ -213,65 +229,96 @@ static void write_note_data(struct note_data *d, struct object_id *oid)
+>>  	}
+>>  }
+>>  
+>> +static void insert_separator(struct strbuf *message, size_t pos)
+>> +{
+>> +	if (separator[strlen(separator) - 1] == '\n')
+>> +		strbuf_addstr(message, separator);
+>> +	else
+>> +		strbuf_insertf(message, pos, "%s%s", separator, "\n");
+>> +}
+>> +
+>> +static void concat_messages(struct note_data *d)
+>> +{
+>> +	struct strbuf msg = STRBUF_INIT;
+>> +
+>> +	size_t i;
+>> +	for (i = 0; i < d->msg_nr ; i++) {
+>
+>Wrong placement of the blank line that separates the declaration and
+>the first statement.
+
+Thanks for your advice and detailed explanation. I have noticed
+in "what's cooking in git" that this patchset is being planed to
+merge into 'next', so I display the diff here for the convenience
+of applying, or please let me know if a new patch is required.
+
+diff --git a/builtin/notes.c b/builtin/notes.c
+index 8905298b..6eede305 100644
+--- a/builtin/notes.c
++++ b/builtin/notes.c
+@@ -28,7 +28,7 @@
+ #include "worktree.h"
+ #include "write-or-die.h"
+ 
+-static const char *separator = "\n";
++static char *separator = "\n";
+ static const char * const git_notes_usage[] = {
+        N_("git notes [--ref <notes-ref>] [list [<object>]]"),
+        N_("git notes [--ref <notes-ref>] add [-f] [--allow-empty] [--separator=<paragraph-break>] [-m <msg> | -F <file> | (-c | -C) <object>] [<object>]"),
+@@ -248,8 +248,8 @@ static void append_separator(struct strbuf *message)
+ static void concat_messages(struct note_data *d)
+ {
+        struct strbuf msg = STRBUF_INIT;
+-       size_t i;
+ 
++       size_t i;
+        for (i = 0; i < d->msg_nr ; i++) {
+                if (d->buf.len)
+                        append_separator(&d->buf);

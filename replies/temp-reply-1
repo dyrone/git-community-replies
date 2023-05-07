@@ -1,0 +1,24 @@
+Subject: Re: Suggestion to provide a way for screenshots to be added to commit messages
+
+Erik Cervin Edin <erik@cervined.in> writes:
+
+>Maybe something similar to what git notes does 🤔
+>Then again, maybe it's easier to just do this differently.
+>Like keeping track of this using a markdown wiki in the repository and
+>just storing the images as a part of the project instead
+
+git notes subcommand can save binary file in note message.
+We can find some clues in git-notes.txt and t3304-notes-man.sh.
+By default, the file specified by `-F` will do stripspace for
+the whole file content, for example, if the binary file contains
+consecutive newlines it will be compressed into only one, in
+another word, the binary file which recover from this like note
+message will become corrupt, so I made patch[1] to support an option
+`--[no-]stripspace` will solve this.
+
+I'm not sure the scenario of using git note to save the binary is
+suitable, but the above context may give some ideas, maybe.
+
+Thanks.
+
+[1] https://public-inbox.org/git/20063beab1893535f03e13b75058d501ed9f2faa.1682671758.git.dyroneteng@gmail.com/
