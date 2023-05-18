@@ -1,0 +1,62 @@
+Subject: Re: [PATCH v9 4/6] notes.c: introduce '--separator=<paragraph-break>' option
+
+"Kristoffer Haugsbakk" <code@khaugsbakk.name> writes:
+
+>I realize that this series is going to be merged to `master`.[1] I was
+>trying out this new change since I might have some use for it when the
+>next version is released.
+
+I'm glad there are use cases for the topic.
+
+>The test case[2] `append: specify an empty separator` demonstrates that
+>`--separator=""` is the same as the default behavior, namely to add a
+>blank line. It has (according to the commit messages) been like this
+>since v5 of this patch.[3]
+>
+>v4 of this patch special-cased `--separator=""` to mean “no
+>separator”. And this was the same behavior as the original
+>`--no-blankline`,[4] which eventually mutated into `--separator`.
+>
+>Why was this changed to act the same as the default behavior (add a
+>blank line)? I can’t seem to find a note for it on the cover letter of
+>v5 or in the relevant replies.
+>
+>It seemed that v4 of this patch (with special-cased empty argument) was
+>perhaps based on Eric Sunshine’s suggestion:[5]
+>
+>> Taking a step back, perhaps think of this in terms of "separator". The
+>> default behavior is to insert "\n" as a separator between notes. If
+>> you add a --separator option, then users could supply their own
+>> separator, such as "----\n" or, in your case, "" to suppress the blank
+>> line.
+>
+>(And then reiterated in a v4 email [6])
+
+There is indeed this change in the process, I did not express it clearly in the
+patch, sorry,  allow me to explain it:
+
+Initially, I wanted to support separator insertion with --[no-]blankline. It was
+intuitive and clear in logic. If it is specified as --blankline, newline would
+be append, if it is --no-blankline, newline would not be append, and --blankline
+would be the default behavior.
+
+The problem with this is that "blankline" might not be a good name because it
+doesn't seem to express the meaning of the separator or paragraph-break, and
+since we're going to support separators, it might be more thorough to support a
+custom separator, which is a better solution I think.
+
+Returning to the issue of -separator = "", my thought is that I want
+--separator="" to behave the same way as
+--separator="<any-string-without-a-trailing-\n'>" when deals a string which does
+not contains a trailing newline. This will eliminate one more implicit logic and
+make behavior more consistent.
+
+>Was the idea perhaps to eventually (separately) add a separate option
+>which functions like `--each-message-is-line-not-paragraph`, like what
+>was mentioned in [7]?
+
+I think --no-separator maybe a better name, means that not any separator will be
+append between two paragraphs even a newline.
+
+Thanks.
+

@@ -1,0 +1,14 @@
+Subject: Re: [PATCH v9 4/6] notes.c: introduce '--separator=<paragraph-break>' option
+
+Junio C Hamano <gitster@pobox.com> writes:
+
+>> I think --no-separator maybe a better name, means that not any separator will be
+>> append between two paragraphs even a newline.
+>
+>It would work as well.  Is it something we can safely add before
+>merging the topic to upcoming -rc1?
+
+I noticed rc-1 will be released at this Friday, I will post a new patch
+about "--no-separator" today(UTC/GMT+08:00).
+
+Thanks.

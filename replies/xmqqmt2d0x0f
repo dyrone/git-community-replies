@@ -1,0 +1,16 @@
+Subject: What's cooking in git.git (May 2023, #03; Tue, 9)
+
+>* tl/notes-separator (2023-04-28) 6 commits
+>  (merged to 'next' on 2023-05-06 at 598ed19c9b)
+> + notes.c: introduce "--[no-]stripspace" option
+> + notes.c: append separator instead of insert by pos
+> + notes.c: introduce '--separator=<paragraph-break>' option
+
+Sorry, there is an updated optimization for the commit of the
+`--separator` option, which can be applied using the reply[1].
+Please also inform me if a new patch is needed and I will send
+it immediately.
+
+[1] https://public-inbox.org/git/20230506092204.57914-1-tenglong.tl@alibaba-inc.com/#t
+
+Thanks.

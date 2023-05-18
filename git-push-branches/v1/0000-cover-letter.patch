@@ -1,0 +1,30 @@
+From b16bdfe6c6cb175c980da5211327af2292c8d045 Mon Sep 17 00:00:00 2001
+From: Teng Long <dyroneteng@gmail.com>
+Date: Sat, 6 May 2023 19:11:12 +0800
+Subject: [PATCH 0/1] push: introduce '--branches' option
+
+Based on the feedback I got from the previous RFC
+patch, I made a formal patch with some additional
+test cases, but I don't know if the scenarios covered by
+the test cases are sufficient, if not, the cases will be
+improved in a subsequent patch.
+
+Thanks.
+
+Teng Long (1):
+  push: introduce '--branches' option
+
+ Documentation/git-push.txt |   3 +-
+ builtin/push.c             |   7 ++-
+ t/t5523-push-upstream.sh   |  12 +++-
+ t/t5543-atomic-push.sh     |   5 +-
+ t/t5583-push-branches.sh   | 115 +++++++++++++++++++++++++++++++++++++
+ 5 files changed, 135 insertions(+), 7 deletions(-)
+ create mode 100755 t/t5583-push-branches.sh
+
+Range-diff:
+1:  9c9438c3 < -:  -------- push: introduce '--heads' option
+-:  -------- > 1:  b16bdfe6 push: introduce '--branches' option
+-- 
+2.40.1.446.gf331623a.dirty
+
