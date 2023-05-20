@@ -1,0 +1,21 @@
+Subject: Re: [PATCH v10 4/6] notes.c: introduce '[--[no-]separator|--separator=<paragraph-break>]' option
+
+"Kristoffer Haugsbakk" <code@khaugsbakk.name> writes:
+
+> > From: Teng Long <dyroneteng@gmail.com>
+> >
+> > When adding new notes or appending to an existing notes, we will
+> > insert a blank line between the paragraphs, like:
+> 
+> I was wondering why it acts this way. So of minor historical note (may
+> be obvious to everyone else): it was in order to mirror how `git commit
+> -m` works. From commit d9246d4303f (Teach "-m <msg>" and "-F <file>" to
+> "git notes edit", 2009-10-09):
+
+Yes, I noticed it too, but I'm not sure whether there exists the same
+requirement in `git commit -m <message> -F <file> ...`, `git commit` is
+usually a more frequently used subcommand, firstly introduced it to
+`git notes` maybe is a good idea, but I'm not going to touch `git commit`
+yet, unless we find someone who has a strong need.
+
+Thanks.

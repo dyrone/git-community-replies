@@ -1,0 +1,34 @@
+Subject: Re: [PATCH v10 0/6] notes.c: introduce "--separator" option
+
+"Kristoffer Haugsbakk" <code@khaugsbakk.name> writes:
+
+#On Thu, May 18, 2023, at 14:02, Teng Long wrote:
+#> From: Teng Long <dyroneteng@gmail.com>
+#>
+#> Diff since v9:
+#>
+#> 1. [4/6] support `--no-separator` which means not to add any paragraph-breaks.
+#
+#Nice to see. :) I think this will be useful. Specifically:
+#
+#Johan Herland wrote (2010):[1]
+#> BTW, since I started talking about git notes, people on this list have found
+#> more and more interesting use cases for them:
+#>
+#> […]
+#>
+#> - Help in bug tracking with header-like lines such as:
+#>     - Causes-Bug: #12345
+#>     - Fixes-Bug: #54321
+#>
+#> - Store after-the-fact "Acked-By", "Reviewed-By", etc. annotations
+#
+#This switch is nice for that since you you don’t really want
+#blank lines for those kinds of format.
+#
+#Cheers
+#
+#[1]: https://lore.kernel.org/git/201001201148.11701.johan@herland.net/
+
+Thanks. It's because of you that this function was incubated and possibly
+born.
