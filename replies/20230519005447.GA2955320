@@ -1,0 +1,56 @@
+Subject: Re: [PATCH v10 4/6] notes.c: introduce '[--[no-]separator|--separator=<paragraph-break>]' option
+
+Jeff King <peff@peff.net> writes:
+
+
+
+diff --git a/builtin/notes.c b/builtin/notes.c
+index 3215bce1..3d9fac41 100644
+--- a/builtin/notes.c
++++ b/builtin/notes.c
+@@ -232,7 +232,7 @@ static void write_note_data(struct note_data *d, struct object_id *oid)
+ static void insert_separator(struct strbuf *message, size_t pos)
+ {
+        if (separator[strlen(separator) - 1] == '\n')
+-               strbuf_addstr(message, separator);
++               strbuf_insertstr(message, pos, separator);
+        else
+                strbuf_insertf(message, pos, "%s%s", separator, "\n");
+ }
+--
+
+
+Then I reproduce by the way you showed:
+
+builtin/notes.c:234:6: runtime error: addition of unsigned offset to 0x7ffee0917d8b overflowed to 0x7ffee0917d8a
+SUMMARY: UndefinedBehaviorSanitizer: undefined-behavior builtin/notes.c:234:6 in
+./test-lib.sh: line 1057:  6933 Abort trap: 6           git notes append --separator="" -m "notes-2"
+
+
+diff --git a/builtin/notes.c b/builtin/notes.c
+index b4bd84d6..3215bce1 100644
+--- a/builtin/notes.c
++++ b/builtin/notes.c
+@@ -231,10 +231,8 @@ static void write_note_data(struct note_data *d, struct object_id *oid)
+ 
+ static void insert_separator(struct strbuf *message, size_t pos)
+ {
+-       size_t sep_len = strlen(separator);
+-       if (sep_len && separator[sep_len - 1] == '\n')
+        if (separator[strlen(separator) - 1] == '\n')
+-               strbuf_insertstr(message, pos, separator);
++               strbuf_addstr(message, separator);
+        else
+                strbuf_insertf(message, pos, "%s%s", separator, "\n");
+ }
+
+
+UBSan means UndefinedBehaviorSanitizer.
+
+undefined代表undefined behavior?
+https://en.wikipedia.org/wiki/Undefined_behavior
+
+address代表
+
+
+如果是这样， 我们为何不在CI中加入对应的构建参数，从而发现这类隐含问题？

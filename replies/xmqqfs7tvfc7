@@ -1,0 +1,22 @@
+Subject: Re: [PATCH v10 0/6] notes.c: introduce "--separator" option
+
+Junio C Hamano <gitster@pobox.com> writes:
+
+> > From: Teng Long <dyroneteng@gmail.com>
+> >
+> > Diff since v9:
+> >
+> > 1. [4/6] support `--no-separator` which means not to add any paragraph-breaks.
+> > 2. [4/6] Fix the problems by the Junio's suggestion [1]
+> >
+> > [1] https://public-inbox.org/git/xmqqsfcjbuud.fsf@gitster.g/
+> 
+> Thanks for an update, but it was a bit unexpected to see a full
+> reroll instead of a new patch to add --no-separator support on top
+> of what has already been queued in 'next' for the past 10+ days.
+
+Sorry, so if the topic already queued in 'next', make new patch
+base on it is preferred, if not queued yet, wo should work on
+keeping commit be atomic on it's duty.
+
+Thanks.
