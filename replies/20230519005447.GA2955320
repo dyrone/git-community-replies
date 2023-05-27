@@ -2,55 +2,99 @@ Subject: Re: [PATCH v10 4/6] notes.c: introduce '[--[no-]separator|--separator=<
 
 Jeff King <peff@peff.net> writes:
 
+> > +static void insert_separator(struct strbuf *message, size_t pos)
+> > +{
+> > +	if (!separator)
+> > +		return;
+> > +	else if (separator[strlen(separator) - 1] == '\n')
+> > +		strbuf_insertstr(message, pos, separator);
+> > +	else
+> > +		strbuf_insertf(message, pos, "%s%s", separator, "\n");
+> > +}
 
+> This function causes UBSan to complain on 'next' (though curiously only
+> with clang, not with gcc[1]). The version in next seems to be from your
+> v9, but it's largely the same except for the "if (!separator)"
+> condition.
+> 
+> The problem is in the middle condition here. If "separator" is non-NULL,
+> but is an empty string, then strlen() will return 0, and we will look at
+> the out-of-bounds byte just before the string.
 
-diff --git a/builtin/notes.c b/builtin/notes.c
-index 3215bce1..3d9fac41 100644
---- a/builtin/notes.c
-+++ b/builtin/notes.c
-@@ -232,7 +232,7 @@ static void write_note_data(struct note_data *d, struct object_id *oid)
- static void insert_separator(struct strbuf *message, size_t pos)
- {
-        if (separator[strlen(separator) - 1] == '\n')
--               strbuf_addstr(message, separator);
-+               strbuf_insertstr(message, pos, separator);
-        else
-                strbuf_insertf(message, pos, "%s%s", separator, "\n");
- }
---
+You definitely correct, will fix.
 
+> This function causes UBSan to complain on 'next' (though curiously only
+> with clang, not with gcc[1]). The version in next seems to be from your
+> v9, but it's largely the same except for the "if (!separator)"
+> condition.
+> 
+> The problem is in the middle condition here. If "separator" is non-NULL,
+> but is an empty string, then strlen() will return 0, and we will look at
+> the out-of-bounds byte just before the string.
+> 
+> We'd probably want something like this:
+> 
+> diff --git a/builtin/notes.c b/builtin/notes.c
+> index 3215bce19b..a46d6dac5c 100644
+> --- a/builtin/notes.c
+> +++ b/builtin/notes.c
+> @@ -231,7 +231,8 @@ static void write_note_data(struct note_data *d, struct object_id *oid)
+>  
+>  static void insert_separator(struct strbuf *message, size_t pos)
+>  {
+> -	if (separator[strlen(separator) - 1] == '\n')
+> +	size_t sep_len = strlen(separator);
+> +	if (sep_len && separator[sep_len - 1] == '\n')
+>  		strbuf_addstr(message, separator);
+>  	else
 
-Then I reproduce by the way you showed:
+>  		strbuf_insertf(message, pos, "%s%s", separator, "\n");
+> 
+> to fix it, though I am not 100% clear on what is supposed to happen for
+> an empty separator here.
 
-builtin/notes.c:234:6: runtime error: addition of unsigned offset to 0x7ffee0917d8b overflowed to 0x7ffee0917d8a
-SUMMARY: UndefinedBehaviorSanitizer: undefined-behavior builtin/notes.c:234:6 in
-./test-lib.sh: line 1057:  6933 Abort trap: 6           git notes append --separator="" -m "notes-2"
+It's supposed to be the same behaviour with not to specify the option, which
+is the default behaviour(to use a '\n' as the separator).
 
+The diff looks good to me, will apply.
 
-diff --git a/builtin/notes.c b/builtin/notes.c
-index b4bd84d6..3215bce1 100644
---- a/builtin/notes.c
-+++ b/builtin/notes.c
-@@ -231,10 +231,8 @@ static void write_note_data(struct note_data *d, struct object_id *oid)
- 
- static void insert_separator(struct strbuf *message, size_t pos)
- {
--       size_t sep_len = strlen(separator);
--       if (sep_len && separator[sep_len - 1] == '\n')
-        if (separator[strlen(separator) - 1] == '\n')
--               strbuf_insertstr(message, pos, separator);
-+               strbuf_addstr(message, separator);
-        else
-                strbuf_insertf(message, pos, "%s%s", separator, "\n");
- }
+> I was also confused that applying the fix on top of the culprit in
+> 'next', 3993a53a13 (notes.c: introduce '--separator=<paragraph-break>'
+> option, 2023-04-28), still leads to test failures in t3301. But I think
+> that is independent of this fix. It fails even without my patch above
+> (and without UBSan) in test 66, "append: specify separator with line
+> break". But the failure goes away in the following patch, ad3d1f8feb
+> (notes.c: append separator instead of insert by pos, 2023-04-28).
 
+Yes, that's a problem which be taken in patch v9 4/6[1] at insert_separator(...)
+, we should use strbuf_insert* api here, otherwise will always do append
+but not to do insert with the position, finally break the test.
 
-UBSan means UndefinedBehaviorSanitizer.
+In the v9 5/6 patch[2], I tried to remove the postion to simply the logic from
+insert with position to just append, and this patch cover the test case failure
+in 4/6.
 
-undefined代表undefined behavior?
-https://en.wikipedia.org/wiki/Undefined_behavior
+> I haven't been following this series enough to know what's going on, but
+> you may want to figure out where the failure is coming from in
+> 3993a53a13. If the change in ad3d1f8feb is merely papering over it, then
+> we'd need to find and fix the true cause. If the bug is really fixed by
+> ad3d1f8feb, we might want to squash those two together to avoid broken
+> bisections.
 
-address代表
+Sure, we should avoid that, will fix.
 
+> [1] To reproduce, I did:
+> 
+>       git checkout 3993a53a13
+>       make SANITIZE=address,undefined CC=clang
+>       cd t && ./t3301-notes.sh -v -i
+> 
+>     I'm using clang-14 on a Debian machine.
 
-如果是这样， 我们为何不在CI中加入对应的构建参数，从而发现这类隐含问题？
+Do you always do the 'make' with 'SANITIZE=address,undefined', should I
+follow that approach, may I ask you to give some advices about it?
+
+Thanks.
+
+[1] https://public-inbox.org/git/ed930ef4f795f30792bc14d9c1939484e4976db8.1682671758.git.dyroneteng@gmail.com/
+[2] https://public-inbox.org/git/eea2246f44a3adfc4888db93975854448271032b.1682671758.git.dyroneteng@gmail.com/
