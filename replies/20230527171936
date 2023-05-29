@@ -1,0 +1,18 @@
+Subject: Re: [PATCH v10 4/6] notes.c: introduce '[--[no-]separator|--separator=<paragraph-break>]' option
+
+Jeff King <peff@peff.net> writes:
+
+> No, not usually. I usually run it when I am working on a patch that does
+> something tricky with memory handling, and I want extra confidence that
+> I haven't screwed anything up. :)
+> 
+> We do run CI jobs for both ASan and UBSan, as of 1c0962c0c4 (ci: add
+> address and undefined sanitizer tasks, 2022-10-20). But they run with
+> gcc, which doesn't seem to catch this particular case.
+> 
+> IMHO it might be worth switching to clang for those jobs. My vague
+> recollection was that I've seen it catch more things, but now we have a
+> concrete example. I think it might also run faster (for some reason
+> doing both sanitizers at once is slower for gcc, but faster for clang).
+
+Thanks for explaining this.

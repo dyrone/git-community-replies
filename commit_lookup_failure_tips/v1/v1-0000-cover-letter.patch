@@ -1,0 +1,24 @@
+From 1f7c62a8870433792076fae30d6c4dc4b61a00d8 Mon Sep 17 00:00:00 2001
+Message-ID: <cover.1685366301.git.dyroneteng@gmail.com>
+From: Teng Long <dyroneteng@gmail.com>
+Date: Mon, 29 May 2023 21:18:21 +0800
+Subject: [PATCH v1 0/1] surround %s with quotes when failed to lookup commit
+
+When lookup commit fails, wrap quotes around %s format specifier.
+
+Do we have to put a "<topic>": or "<filename>:" before the commit
+title, such as this patch, which modifies two different features,
+how should we name it appropriately.
+
+Thanks.
+
+Teng Long (1):
+  surround %s with quotes when failed to lookup commit
+
+ builtin/commit.c     | 6 +++---
+ builtin/merge-tree.c | 2 +-
+ 2 files changed, 4 insertions(+), 4 deletions(-)
+
+-- 
+2.41.0.rc2
+
