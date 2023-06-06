@@ -1,0 +1,36 @@
+Subject: Re: [PATCH v11 0/7] notes.c: introduce "--separator"
+
+Junio C Hamano <gitster@pobox.com> writes:
+
+> In a more perfect world, you would have sent the "--separator" thing
+> that already supported "--no-separator" from the get-go.  You would
+> also have sent the 4th step that does not need ubsan fix.  You do
+> not have the luxury to do so when your series hit 'next'---you need
+> to live with your earlier mistakes.
+> 
+> Until we cross the release boundary, that is.
+
+OK, I hope to make the commit more cohesive before they release, but
+I ignored that the 'next' branch is already in the release period
+(because I think it might be possible to replace it in the 'next', but
+actually it shouldn't be done), sorry for the trouble it may cause you.
+
+> I'll revert the whole thing out of 'next'.  Once the next cycle
+> opens after the dust from the release settles (i.e. around 10th of
+> June or so), ...
+
+OK.
+
+> ... please resubmit the series that does not need "oops, we
+> probably should have added '--[no-]separator' from the get-go" or
+> "oops, we had undefined behaviour here, and here is a fix", as if
+> you are a more perfect developer than you were when the version that
+> has been queued in 'next' was written (and in fact, you are, after
+> discussing the design and UBSan issues and stuff during the review).
+
+I think the v11 should be a version which is acceptable if there is
+no incoming review conversitions (The current v11 that separates
+'--no-separator' as a individual commit OR make 7/7 into 4/7, both
+approaches seem fine)?
+
+Thanks.
