@@ -1,0 +1,17 @@
+Subject: Re: [PATCH v9 4/6] notes.c: introduce '--separator=<paragraph-break>' option
+
+> Teng Long <dyroneteng@gmail.com> writes:
+> 
+> > I think we are now in a new cycle, maybe we could rewind and use
+> > v11 directlly? Sorry that it may have brought on extra work.
+> 
+> I think the tl/notes-separator topic is no longer in 'next' so we
+> can do whatever you like to it ;-).  It would be easy to just
+> replace the whole thing with newly reviewed version.
+
+Yes, v11 fixed the UBSan problem which found by Peff and also the broken CI
+under run a bisection (both are found in v9 which already be rewinded in
+'next'). If there are no new comments on v11, I think maybe it's what we want at
+present.
+
+Thanks.
