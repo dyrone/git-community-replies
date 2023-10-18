@@ -1,0 +1,14 @@
+Subject: Re: [PATCH v4 4/4] pack-bitmap.c: trace bitmap ignore logs when midx-bitmap is found
+
+Jeff King <peff@peff.net> writes:
+
+> > I agree it's not hurting here, it's OK for me to make the improvement
+> > here. But I have a question, do we prefer to omit the initialization
+> > in such scenarios if we make sure it will initialized correctly？
+>
+> I don't know that we have a particular rule here, but I would say that
+> yes, if you know the initialization isn't used, then skip it. That
+> communicates the expectation to anybody reading the code. And if you're
+> wrong, the compiler will generally notice.
+
+Thanks for the explanation!

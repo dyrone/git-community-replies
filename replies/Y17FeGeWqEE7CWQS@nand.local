@@ -1,0 +1,13 @@
+Subject: Re: [PATCH 0/1] pack-bitmap.c: avoid exposing absolute paths
+
+Taylor Blau <me@ttaylorr.com> writes:
+
+> Maybe that is the best approach forward. Teng Long: does that sound OK
+> to you?
+
+
+Sorry, there are some problems on my Mac (I can't run coverage but it's ok now),
+I will read the context and reply again a little bit later.
+
+Thanks for Taylor Blau, Ævar Arnfjörð Bjarmason and Jeff King to supply the
+discussions on this topic.

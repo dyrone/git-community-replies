@@ -1,0 +1,84 @@
+From 9d5a491887b57bbcc30010aa7efb63e316c6d190 Mon Sep 17 00:00:00 2001
+Message-Id: <cover.1668063122.git.dyroneteng@gmail.com>
+From: Teng Long <dyroneteng@gmail.com>
+Date: Thu, 10 Nov 2022 14:52:02 +0800
+Subject: [PATCH v3 0/2] pack-bitmap.c: avoid exposing absolute paths  
+
+Diff since v2:
+
+* remove unnecessary comments.
+* use "GIT_TRACE2_EVENT" instead of "GIT_TRACE_PERF".
+* improve commit message of [1/2].
+
+Thanks.
+
+Teng Long (2):
+  pack-bitmap.c: remove unnecessary "open_pack_index()" calls
+  pack-bitmap.c: avoid exposing absolute paths
+
+ pack-bitmap.c           | 13 ++++++-------
+ t/t5310-pack-bitmaps.sh |  5 +++--
+ 2 files changed, 9 insertions(+), 9 deletions(-)
+
+Range-diff against v2:
+2:  7ac9b859f3 ! 1:  aaeb021538 pack-bitmap.c: remove unnecessary "open_pack_index()" calls
+    @@ Metadata
+      ## Commit message ##
+         pack-bitmap.c: remove unnecessary "open_pack_index()" calls
+     
+    -    Everytime when calling "open_pack_bitmap_1()", we will firstly call
+    -    "open_pack_index(packfile)" to check the index, then further check
+    -    again in "is_pack_valid()" before mmap the bitmap file. So, let's
+    -    remove the first check here.
+    +    When trying to open a pack bitmap, we call open_pack_bitmap_1() in a
+    +    loop, during which it tries to open up the pack index corresponding
+    +    with each available pack.
+     
+    -    The relate discussion:
+    -    https://public-inbox.org/git/Y2IiSU1L+bJPUioV@coredump.intra.peff.net/#t
+    +    It's likely that we'll end up relying on objects in that pack later
+    +    in the process (in which case we're doing the work of opening the
+    +    pack index optimistically), but not guaranteed.
+    +
+    +    For instance, consider a repository with a large number of small
+    +    packs, and one large pack with a bitmap. If we see that bitmap pack
+    +    last in our loop which calls open_pack_bitmap_1(), the current code
+    +    will have opened *all* pack index files in the repository. If the
+    +    request can be served out of the bitmapped pack alone, then the time
+    +    spent opening these idx files was wasted.S
+    +
+    +    Since open_pack_bitmap_1() calls is_pack_valid() later on (which in
+    +    turns calls open_pack_index() itself), we can just drop the earlier
+    +    call altogether.
+     
+         Signed-off-by: Teng Long <dyroneteng@gmail.com>
+     
+1:  de941f58f9 ! 2:  9d5a491887 pack-bitmap.c: avoid exposing absolute paths
+    @@ pack-bitmap.c: static int open_midx_bitmap_1(struct bitmap_index *bitmap_git,
+      		get_midx_filename(&buf, midx->object_dir);
+     -		/* ignore extra bitmap file; we can only handle one */
+     -		warning(_("ignoring extra bitmap file: '%s'"), buf.buf);
+    -+		/* ignore extra midx bitmap files; we can only handle one */
+     +		trace2_data_string("bitmap", the_repository,
+     +				   "ignoring extra midx bitmap file", buf.buf);
+      		close(fd);
+    @@ pack-bitmap.c: static int open_pack_bitmap_1(struct bitmap_index *bitmap_git, st
+      	if (bitmap_git->pack || bitmap_git->midx) {
+     -		/* ignore extra bitmap file; we can only handle one */
+     -		warning(_("ignoring extra bitmap file: '%s'"), packfile->pack_name);
+    -+		/* ignore extra bitmap files; we can only handle one */
+     +		trace2_data_string("bitmap", the_repository,
+     +				   "ignoring extra bitmap file", packfile->pack_name);
+      		close(fd);
+    @@ t/t5310-pack-bitmaps.sh: test_bitmap_cases () {
+      
+     -			git rev-list --use-bitmap-index HEAD 2>err &&
+     -			grep "ignoring extra bitmap file" err
+    -+			GIT_TRACE2_PERF=$(pwd)/trace2.txt git rev-list --use-bitmap-index HEAD &&
+    ++			GIT_TRACE2_EVENT=$(pwd)/trace2.txt git rev-list --use-bitmap-index HEAD &&
+     +			grep "opened bitmap" trace2.txt &&
+     +			grep "ignoring extra bitmap" trace2.txt
+      		)
+-- 
+2.38.1.383.g7ac9b859f31.dirty
+

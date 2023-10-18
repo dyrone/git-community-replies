@@ -1,0 +1,25 @@
+From c581cb24b650a9d676446b7f4ad201febfdde4dc Mon Sep 17 00:00:00 2001
+From: Teng Long <dyroneteng@gmail.com>
+Date: Thu, 13 Oct 2022 13:44:55 +0800
+Subject: [RFC PATCH 0/2] notes.c: introduce "--no-blankline" option
+
+This RFC patchset includes two patches.
+
+One aims to introduce a new option "--no-blankline" for "git-notes-append". The
+another one tries to fix the inaccurate output when target and append note are
+both empty.
+
+Thanks.
+
+Teng Long (2):
+  notes.c: introduce "--no-blankline" option
+  notes.c: fixed tip when target and append note are both empty
+
+ Documentation/git-notes.txt | 10 ++++++++--
+ builtin/notes.c             | 18 +++++++++++++++---
+ t/t3301-notes.sh            | 15 ++++++++++++++-
+ 3 files changed, 37 insertions(+), 6 deletions(-)
+
+-- 
+2.38.0.rc2
+

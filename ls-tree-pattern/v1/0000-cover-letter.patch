@@ -1,0 +1,33 @@
+From bf5b3e33091a301d336fb2c15e1d5ab0cc75ddfe Mon Sep 17 00:00:00 2001
+From: Teng Long <dyroneteng@gmail.com>
+Date: Thu, 17 Nov 2022 19:13:56 +0800
+Subject: [RFC PATCH 0/6] ls-tree: introduce '--pattern' option
+
+This RFC patch introduce a new "ls-tree" option "--pattern", aim to match the
+entries by regex then filter the output which we may want to achieve. It also
+contains some commit for preparation or cleanup.
+
+The idea may be not comprehensive and the tests for it might be insufficient
+too, but I'd like to listen the suggestion from the community to decide if it's
+worth going forward with.
+
+Thanks.
+
+Teng Long (6):
+  ls-tree: cleanup the redundant SPACE
+  t3104: remove shift code in 'test_ls_tree_format'
+  ls-tree: optimize params of 'show_tree_common_default_long()'
+  ls-tree: improving cohension in the print code
+  ls-tree: introduce 'match_pattern()' function
+  ls-tree: introduce '--pattern' option
+
+ Documentation/git-ls-tree.txt |   7 ++-
+ builtin/ls-tree.c             | 109 ++++++++++++++++++++++++++--------
+ t/t3104-ls-tree-format.sh     |   1 -
+ t/t3106-ls-tree-pattern.sh    |  70 ++++++++++++++++++++++
+ 4 files changed, 161 insertions(+), 26 deletions(-)
+ create mode 100755 t/t3106-ls-tree-pattern.sh
+
+-- 
+2.38.1.426.g770fc8806cb.dirty
+

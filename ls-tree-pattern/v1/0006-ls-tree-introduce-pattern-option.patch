@@ -1,0 +1,295 @@
+From bf5b3e33091a301d336fb2c15e1d5ab0cc75ddfe Mon Sep 17 00:00:00 2001
+From: Teng Long <dyroneteng@gmail.com>
+Date: Tue, 15 Nov 2022 17:56:31 +0800
+Subject: [RFC PATCH 6/6] ls-tree: introduce '--pattern' option
+
+The "--pattern" option uses regular expressions to match each
+entry, then filter the output of "ls-tree" .
+
+Signed-off-by: Teng Long <dyroneteng@gmail.com>
+---
+ Documentation/git-ls-tree.txt |  7 ++-
+ builtin/ls-tree.c             | 82 +++++++++++++++++++++++------------
+ t/t3106-ls-tree-pattern.sh    | 70 ++++++++++++++++++++++++++++++
+ 3 files changed, 131 insertions(+), 28 deletions(-)
+ create mode 100755 t/t3106-ls-tree-pattern.sh
+
+diff --git a/Documentation/git-ls-tree.txt b/Documentation/git-ls-tree.txt
+index 0240adb8eec..39346409f2f 100644
+--- a/Documentation/git-ls-tree.txt
++++ b/Documentation/git-ls-tree.txt
+@@ -10,7 +10,7 @@ SYNOPSIS
+ --------
+ [verse]
+ 'git ls-tree' [-d] [-r] [-t] [-l] [-z]
+-	    [--name-only] [--name-status] [--object-only] [--full-name] [--full-tree] [--abbrev[=<n>]] [--format=<format>]
++	    [--name-only] [--name-status] [--object-only] [--full-name] [--full-tree] [--abbrev[=<n>]] [--format=<format>] [--pattern=<pattern>]
+ 	    <tree-ish> [<path>...]
+ 
+ DESCRIPTION
+@@ -93,6 +93,11 @@ OPTIONS
+ 	format-altering options, including `--long`, `--name-only`
+ 	and `--object-only`.
+ 
++--pattern=<pattern>::
++    The <pattern> is a string of regular expression format used to
++    match each entry. Unmatched entries will be filtered and not
++    dump to the output.
++
+ [<path>...]::
+ 	When paths are given, show them (note that this isn't really raw
+ 	pathnames, but rather a list of patterns to match).  Otherwise
+diff --git a/builtin/ls-tree.c b/builtin/ls-tree.c
+index 03dd3fbcb26..576fc9ad16f 100644
+--- a/builtin/ls-tree.c
++++ b/builtin/ls-tree.c
+@@ -13,6 +13,7 @@
+ #include "builtin.h"
+ #include "parse-options.h"
+ #include "pathspec.h"
++#include <stdio.h>
+ 
+ static int line_termination = '\n';
+ #define LS_RECURSIVE 1
+@@ -25,6 +26,7 @@ static int chomp_prefix;
+ static const char *ls_tree_prefix;
+ static const char *format;
+ static const char *pattern;
++static regex_t *regex;
+ struct show_tree_data {
+ 	unsigned mode;
+ 	enum object_type type;
+@@ -47,29 +49,29 @@ static enum ls_tree_cmdmode {
+ 	MODE_OBJECT_ONLY,
+ } cmdmode;
+ 
+-__attribute__((unused))
+ static int match_pattern(const char *line)
+ {
+ 	int ret = 0;
+-	regex_t r;
+ 	regmatch_t m[1];
+ 	char errbuf[64];
+ 
+-	ret = regcomp(&r, pattern, 0);
+-	if (ret) {
+-		regerror(ret, &r, errbuf, sizeof(errbuf));
+-		die("failed regcomp() for pattern '%s' (%s)", pattern, errbuf);
++	if (!regex) {
++		regex = xmalloc(sizeof(*regex));
++		ret = regcomp(regex, pattern, 0);
++		if (ret) {
++			regerror(ret, regex, errbuf, sizeof(errbuf));
++			die("failed regcomp() for pattern '%s' (%s)", pattern, errbuf);
++		}
+ 	}
+-	ret = regexec(&r, line, 1, m, 0);
++
++	ret = regexec(regex, line, 1, m, 0);
+ 	if (ret) {
+ 		if (ret == REG_NOMATCH)
+-			goto cleanup;
+-		regerror(ret, &r, errbuf, sizeof(errbuf));
++			return ret;
++		regerror(ret, regex, errbuf, sizeof(errbuf));
+ 		die("failed regexec() for subject '%s' (%s)", line, errbuf);
+ 	}
+ 
+-cleanup:
+-	regfree(&r);
+ 	return ret;
+ }
+ 
+@@ -194,8 +196,12 @@ static int show_tree_fmt(const struct object_id *oid, struct strbuf *base,
+ 
+ 	baselen = base->len;
+ 	strbuf_expand(&sb, format, expand_show_tree, &data);
+-	strbuf_addch(&sb, line_termination);
+-	fwrite(sb.buf, sb.len, 1, stdout);
++
++	if (!pattern || !match_pattern(sb.buf)) {
++		strbuf_addch(&sb, line_termination);
++		fwrite(sb.buf, sb.len, 1, stdout);
++	}
++
+ 	strbuf_release(&sb);
+ 	strbuf_setlen(base, baselen);
+ 	return recurse;
+@@ -232,19 +238,33 @@ static int show_tree_common(struct show_tree_data *data, int *recurse,
+ static void show_tree_common_default_long(struct show_tree_data *data)
+ {
+ 	int base_len = data->base->len;
++	struct strbuf sb = STRBUF_INIT;
++	int sb_len = 0;
+ 
+ 	if (data->size_text)
+-		printf("%06o %s %s %7s\t", data->mode, type_name(data->type),
+-		       find_unique_abbrev(data->oid, abbrev), data->size_text);
++		strbuf_addf(&sb, "%06o %s %s %7s\t", data->mode,
++			    type_name(data->type),
++			    find_unique_abbrev(data->oid, abbrev),
++			    data->size_text);
+ 	else
+-		printf("%06o %s %s\t", data->mode, type_name(data->type),
+-		       find_unique_abbrev(data->oid, abbrev));
++		strbuf_addf(&sb, "%06o %s %s\t", data->mode,
++			    type_name(data->type),
++			    find_unique_abbrev(data->oid, abbrev));
+ 
+ 	strbuf_addstr(data->base, data->pathname);
+-	write_name_quoted_relative(data->base->buf,
+-				   chomp_prefix ? ls_tree_prefix : NULL, stdout,
+-				   line_termination);
++	sb_len = sb.len;
++	strbuf_addbuf(&sb, data->base);
++
++	if (!pattern || !match_pattern(sb.buf)) {
++		strbuf_setlen(&sb, sb_len);
++		printf("%s", sb.buf);
++		write_name_quoted_relative(data->base->buf,
++					   chomp_prefix ? ls_tree_prefix : NULL,
++					   stdout, line_termination);
++	}
+ 	strbuf_setlen(data->base, base_len);
++
++	strbuf_release(&sb);
+ }
+ 
+ static int show_tree_default(const struct object_id *oid, struct strbuf *base,
+@@ -306,9 +326,11 @@ static int show_tree_name_only(const struct object_id *oid, struct strbuf *base,
+ 		return early;
+ 
+ 	strbuf_addstr(base, pathname);
+-	write_name_quoted_relative(base->buf,
+-				   chomp_prefix ? ls_tree_prefix : NULL,
+-				   stdout, line_termination);
++	if (!pattern || !match_pattern(base->buf)) {
++		write_name_quoted_relative(base->buf,
++					   chomp_prefix ? ls_tree_prefix : NULL,
++					   stdout, line_termination);
++	}
+ 	strbuf_setlen(base, baselen);
+ 	return recurse;
+ }
+@@ -320,12 +342,14 @@ static int show_tree_object(const struct object_id *oid, struct strbuf *base,
+ 	int early;
+ 	int recurse;
+ 	struct show_tree_data data = { 0 };
++	const char *oid_text = find_unique_abbrev(oid, abbrev);
+ 
+ 	early = show_tree_common(&data, &recurse, oid, base, pathname, mode);
+ 	if (early >= 0)
+ 		return early;
+ 
+-	printf("%s%c", find_unique_abbrev(oid, abbrev), line_termination);
++	if (!pattern || !match_pattern(oid_text))
++		printf("%s%c", oid_text, line_termination);
+ 	return recurse;
+ }
+ 
+@@ -391,8 +415,10 @@ int cmd_ls_tree(int argc, const char **argv, const char *prefix)
+ 			 N_("list entire tree; not just current directory "
+ 			    "(implies --full-name)")),
+ 		OPT_STRING_F(0, "format", &format, N_("format"),
+-					 N_("format to use for the output"),
+-					 PARSE_OPT_NONEG),
++			     N_("format to use for the output"),
++			     PARSE_OPT_NONEG),
++		OPT_STRING(0, "pattern", &pattern, "pattern",
++			   "pattern to use to match the output"),
+ 		OPT__ABBREV(&abbrev),
+ 		OPT_END()
+ 	};
+@@ -430,10 +456,12 @@ int cmd_ls_tree(int argc, const char **argv, const char *prefix)
+ 		usage_with_options(ls_tree_usage, ls_tree_options);
+ 	if (get_oid(argv[0], &oid))
+ 		die("Not a valid object name %s", argv[0]);
++	if (pattern && !strlen(pattern))
++		die("Not a valid pattern, the value is empty");
+ 
+ 	/*
+ 	 * show_recursive() rolls its own matching code and is
+-	 * generally ignorant of 'struct pathspec'. The magic mask
++	 * generally ignorant f 'struct pathspec'. The magic mask
+ 	 * cannot be lifted until it is converted to use
+ 	 * match_pathspec() or tree_entry_interesting()
+ 	 */
+diff --git a/t/t3106-ls-tree-pattern.sh b/t/t3106-ls-tree-pattern.sh
+new file mode 100755
+index 00000000000..e4a81c8c47e
+--- /dev/null
++++ b/t/t3106-ls-tree-pattern.sh
+@@ -0,0 +1,70 @@
++#!/bin/sh
++
++test_description='ls-tree pattern'
++
++TEST_PASSES_SANITIZE_LEAK=true
++. ./test-lib.sh
++. "$TEST_DIRECTORY"/lib-t3100.sh
++
++test_expect_success 'setup' '
++	setup_basic_ls_tree_data
++'
++
++test_expect_success 'ls-tree pattern usage' '
++	test_expect_code 129 git ls-tree --pattern HEAD &&
++	test_expect_code 128 git ls-tree --pattern "" HEAD >err 2>&1 &&
++	grep "Not a valid pattern, the value is empty" err
++'
++
++test_expect_success 'combine with "--object-only"' '
++	cat > expect <<-EOF &&
++		6da7993
++	EOF
++
++	git ls-tree --object-only --abbrev=7 --pattern "6da7993" HEAD > actual &&
++	test_cmp expect actual
++'
++
++test_expect_success 'combine with "--name-only"' '
++	cat > expect <<-EOF &&
++		.gitmodules
++		top-file.t
++	EOF
++
++	git ls-tree --name-only --pattern "\." HEAD > actual &&
++	test_cmp expect actual
++'
++
++test_expect_success 'combine with "--long"' '
++	cat > expect <<-EOF &&
++		100644 blob 6da7993      61	.gitmodules
++		100644 blob 02dad95       9	top-file.t
++	EOF
++	git ls-tree --long --abbrev=7 --pattern "blob" HEAD > actual &&
++	test_cmp expect actual
++'
++
++test_expect_success 'combine with "--format"' '
++	# Change the output format by replacing space separators with asterisks.
++	format="%(objectmode)*%(objecttype)*%(objectname)%x09%(path)" &&
++	pattern="100644\*blob" &&
++
++	cat > expect <<-EOF &&
++		100644*blob*6da7993	.gitmodules
++		100644*blob*02dad95	top-file.t
++	EOF
++
++	git ls-tree --abbrev=7 --format "$format" --pattern "$pattern" HEAD >actual &&
++	test_cmp expect actual
++'
++
++test_expect_success 'default output format (only with "--pattern" option)' '
++	cat > expect <<-EOF &&
++		100644 blob 6da7993ca1a3435f63c598464f77bdc6dae15aa5	.gitmodules
++		100644 blob 02dad956d9274a70f7fafe45a5ffa2e123acd9a8	top-file.t
++	EOF
++	git ls-tree --pattern "blob" HEAD > actual &&
++	test_cmp expect actual
++'
++
++test_done
+-- 
+2.38.1.426.g770fc8806cb.dirty
+

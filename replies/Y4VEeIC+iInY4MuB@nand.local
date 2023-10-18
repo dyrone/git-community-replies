@@ -1,0 +1,18 @@
+Subject: Re: [PATCH v5 0/4] pack-bitmap.c: avoid exposing absolute paths
+
+Taylor Blau <me@ttaylorr.com> writes:
+
+> > Besides of 3/4 and 4/4, the 1/4 and 2/4 seem already in 'next' as
+> > 8ddc06631b184e6f43051f7ea8ac9bbc86817127 and
+> > 2aa84d5f3ea1966a81477ad31bee0136e39d3917 , but I send again here just for
+> > the completeness of the patchset, I think it will be nice to merge Peff's
+> > commits of there are no new suggestions.
+>
+> As you note, the first couple of patches are already in 'next', so those
+> do not need to be queued again.
+>
+> But the latter two patches look good, and are ready to go.
+>
+> Thanks for continuing to work on this :-)..
+
+Thank you for your help, Taylor Blau.

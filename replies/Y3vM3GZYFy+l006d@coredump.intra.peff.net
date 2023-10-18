@@ -1,0 +1,46 @@
+Subject: Re: [PATCH v4 4/4] pack-bitmap.c: trace bitmap ignore logs when midx-bitmap is found
+
+Jeff King <peff@peff.net> writes:
+
+> > From: Jeff King <peff@peff.net>
+> >
+> > We retained pack bitmaps as a quick recovery mechanism while
+> > test-deploying midx bitmaps. This is an internal mechanism, and we
+> > want to expose this rule externally through trace2 so that end users,
+> > repo-maintainers, and debuggers know what is happening in the process.
+>
+> Re-reading this outside the context of the earlier thread, I think "this
+> rule" is a little vague. Maybe:
+>
+>   When we find a midx bitmap, we do not bother checking for pack
+>   bitmaps, since we can use only one. But since we will warn of unused
+>   bitmaps via trace2, let's continue looking for pack bitmaps when
+>   tracing is enabled.
+
+Thanks. That's more clear and will be applies on next patch.
+
+> > @@ -559,11 +557,20 @@ static int open_midx_bitmap(struct repository *r,
+> >  static int open_bitmap(struct repository *r,
+> >  		       struct bitmap_index *bitmap_git)
+> >  {
+> > +	int found = 0;
+> > +
+> >  	assert(!bitmap_git->map);
+> >
+> > -	if (!open_midx_bitmap(r, bitmap_git))
+> > -		return 0;
+> > -	return open_pack_bitmap(r, bitmap_git);
+> > +	found = !open_midx_bitmap(r, bitmap_git);
+>
+> I think we can drop the initialization of "found = 0"; that value is
+> unused, since we'll always assign to it (I think my initial attempt had
+> setting it to 1 inside the conditional).
+>
+> It's not hurting anything functionally, but it makes the code slightly
+> more confusing to read.
+
+I agree it's not hurting here, it's OK for me to make the improvement
+here. But I have a question, do we prefer to omit the initialization
+in such scenarios if we make sure it will initialized correctly？
+
+Thanks.

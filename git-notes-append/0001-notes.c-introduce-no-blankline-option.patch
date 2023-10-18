@@ -1,0 +1,114 @@
+From d69bd0a0113e254a2d2ec94d2fcfb408d0c63c78 Mon Sep 17 00:00:00 2001
+From: Teng Long <dyroneteng@gmail.com>
+Date: Tue, 11 Oct 2022 19:49:51 +0800
+Subject: [RFC PATCH 1/2] notes.c: introduce "--no-blankline" option
+
+When appending to a given object which has note and if the appended
+note is not empty too, we will insert a blank line at first. The
+blank line serves as a split line, but sometimes we just want to
+omit it then append on the heels of the target note.
+
+Signed-off-by: Teng Long <dyroneteng@gmail.com>
+---
+ Documentation/git-notes.txt | 10 ++++++++--
+ builtin/notes.c             |  5 ++++-
+ t/t3301-notes.sh            | 12 ++++++++++++
+ 3 files changed, 24 insertions(+), 3 deletions(-)
+
+diff --git a/Documentation/git-notes.txt b/Documentation/git-notes.txt
+index efbc10f0f5..fd0fc3d9c7 100644
+--- a/Documentation/git-notes.txt
++++ b/Documentation/git-notes.txt
+@@ -11,7 +11,7 @@ SYNOPSIS
+ 'git notes' [list [<object>]]
+ 'git notes' add [-f] [--allow-empty] [-F <file> | -m <msg> | (-c | -C) <object>] [<object>]
+ 'git notes' copy [-f] ( --stdin | <from-object> [<to-object>] )
+-'git notes' append [--allow-empty] [-F <file> | -m <msg> | (-c | -C) <object>] [<object>]
++'git notes' append [--allow-empty] [--no-blankline] [-F <file> | -m <msg> | (-c | -C) <object>] [<object>]
+ 'git notes' edit [--allow-empty] [<object>]
+ 'git notes' show [<object>]
+ 'git notes' merge [-v | -q] [-s <strategy> ] <notes-ref>
+@@ -86,7 +86,9 @@ the command can read the input given to the `post-rewrite` hook.)
+ 
+ append::
+ 	Append to the notes of an existing object (defaults to HEAD).
+-	Creates a new notes object if needed.
++	Creates a new notes object if needed. If the note of the given
++	object and the note to be appended are not empty, a blank line
++	will be inserted between them.
+ 
+ edit::
+ 	Edit the notes for a given object (defaults to HEAD).
+@@ -159,6 +161,10 @@ OPTIONS
+ 	Allow an empty note object to be stored. The default behavior is
+ 	to automatically remove empty notes.
+ 
++--no-blank-line::
++	When appending note, do not insert a blank line between
++	the note of given object and the note to be appended.
++
+ --ref <ref>::
+ 	Manipulate the notes tree in <ref>.  This overrides
+ 	`GIT_NOTES_REF` and the "core.notesRef" configuration.  The ref
+diff --git a/builtin/notes.c b/builtin/notes.c
+index be51f69225..1ca0476a27 100644
+--- a/builtin/notes.c
++++ b/builtin/notes.c
+@@ -562,6 +562,7 @@ static int copy(int argc, const char **argv, const char *prefix)
+ static int append_edit(int argc, const char **argv, const char *prefix)
+ {
+ 	int allow_empty = 0;
++	int no_blankline = 0;
+ 	const char *object_ref;
+ 	struct notes_tree *t;
+ 	struct object_id object, new_note;
+@@ -584,6 +585,8 @@ static int append_edit(int argc, const char **argv, const char *prefix)
+ 			parse_reuse_arg),
+ 		OPT_BOOL(0, "allow-empty", &allow_empty,
+ 			N_("allow storing empty note")),
++		OPT_BOOL(0, "no-blankline", &no_blankline,
++			N_("do not initially add a blank line")),
+ 		OPT_END()
+ 	};
+ 	int edit = !strcmp(argv[0], "edit");
+@@ -619,7 +622,7 @@ static int append_edit(int argc, const char **argv, const char *prefix)
+ 		char *prev_buf = read_object_file(note, &type, &size);
+ 
+ 		strbuf_grow(&d.buf, size + 1);
+-		if (d.buf.len && prev_buf && size)
++		if (!no_blankline && d.buf.len && prev_buf && size)
+ 			strbuf_insertstr(&d.buf, 0, "\n");
+ 		if (prev_buf && size)
+ 			strbuf_insert(&d.buf, 0, prev_buf, size);
+diff --git a/t/t3301-notes.sh b/t/t3301-notes.sh
+index 3288aaec7d..43ac3feb78 100755
+--- a/t/t3301-notes.sh
++++ b/t/t3301-notes.sh
+@@ -521,12 +521,24 @@ test_expect_success 'listing non-existing notes fails' '
+ 	test_must_be_empty actual
+ '
+ 
++test_expect_success 'append to existing note without a beginning blank line' '
++	cat >expect <<-EOF &&
++		Initial set of notes
++		Appended notes
++	EOF
++	git notes add -m "Initial set of notes" &&
++	git notes append --no-blankline -m "Appended notes" &&
++	git notes show >actual &&
++	test_cmp expect actual
++'
++
+ test_expect_success 'append to existing note with "git notes append"' '
+ 	cat >expect <<-EOF &&
+ 		Initial set of notes
+ 
+ 		More notes appended with git notes append
+ 	EOF
++	git notes remove HEAD &&
+ 	git notes add -m "Initial set of notes" &&
+ 	git notes append -m "More notes appended with git notes append" &&
+ 	git notes show >actual &&
+-- 
+2.38.0.rc2
+

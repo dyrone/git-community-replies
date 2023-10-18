@@ -1,0 +1,20 @@
+Subject: Re: [PATCH v4 0/4] pack-bitmap.c: avoid exposing absolute paths
+
+Jeff King <peff@peff.net> writes:
+
+> > Diff since v3:
+> >
+> > I picked Peff's two new constructive patches[1] which I think are meaningful.
+> > Peff also mentioned whether to design a "GIT_TRACE2_BITMAP" ENV to help
+> > debugging bitmap, and I think it's very interesting but maybe it's a bigger
+> > scale on current patchset, so I prefer to do it in another series.
+>
+> I think the first two are already in 'next', so they aren't eligible for
+> re-roll, though from the range diff it looks like those changes are
+> already there?
+
+Oops, I created the wrong range-diff. I didn't check the 'next', but now
+I think I shall make the reroll here because the new replies from Junio
+and you.
+
+Thanks.

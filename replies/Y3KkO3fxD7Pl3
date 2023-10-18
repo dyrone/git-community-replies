@@ -1,0 +1,120 @@
+Subject: Re: [PATCH v3 0/2] pack-bitmap.c: avoid exposing absolute paths
+
+> Me too. If we wanted to go further, there are two obvious next steps.
+>
+> One, we can break out of the bitmap loop early if we're not tracing:
+
+> diff --git a/pack-bitmap.c b/pack-bitmap.c
+> index aaa2d9a104..3b6c2f804a 100644
+> --- a/pack-bitmap.c
+> +++ b/pack-bitmap.c
+> @@ -527,8 +527,15 @@ static int open_pack_bitmap(struct repository *r,
+>  	assert(!bitmap_git->map);
+>
+>  	for (p = get_all_packs(r); p; p = p->next) {
+> -		if (open_pack_bitmap_1(bitmap_git, p) == 0)
+> +		if (open_pack_bitmap_1(bitmap_git, p) == 0) {
+>  			ret = 0;
+> +			/*
+> +			 * The only reason to keep looking is to report
+> +			 * duplicates.
+> +			 */
+> +			if (!trace2_is_enabled())
+> +				break;
+> +		}
+>  	}
+>
+>  	return ret;
+>
+> I doubt this buys us much in practice. After patch 2, looking for extra
+> bitmaps is much cheaper. It's one open() call per pack (which will
+> return ENOENT normally) looking for a bitmap. And while it's only 2
+> lines of code, it does increase coupling of assumptions between the two
+> functions. So maybe not worth doing. I dunno.
+
+I agree and I think it's reasonable.
+
+So If I bring it into the patch how about the commit message:
+
+Author: Jeff King <peff@peff.net>
+Date:   Thu Nov 17 19:55:23 2022 +0800
+
+    pack-bitmap.c: break out of the bitmap loop early if not tracing
+
+    When we successfully open a bitmap, we will continue to try to open
+    other packs, and when trace2 is enabled, we will report any subsequent
+    bitmap ignored information in the log. So when we find that trace2 is
+    not enabled, we can actually terminate the loop early.
+
+    Signed-off-by: Jeff King <peff@peff.net>
+    Signed-off-by: Teng Long <dyroneteng@gmail.com>
+
+> And two, we could complain when there is both a midx and a pack bitmap,
+> like so:
+>
+> diff --git a/pack-bitmap.c b/pack-bitmap.c
+> index 3b6c2f804a..44a80ed8f2 100644
+> --- a/pack-bitmap.c
+> +++ b/pack-bitmap.c
+> @@ -524,8 +524,6 @@ static int open_pack_bitmap(struct repository *r,
+>  	struct packed_git *p;
+>  	int ret = -1;
+>
+> -	assert(!bitmap_git->map);
+> -
+>  	for (p = get_all_packs(r); p; p = p->next) {
+>  		if (open_pack_bitmap_1(bitmap_git, p) == 0) {
+>  			ret = 0;
+> @@ -559,11 +557,20 @@ static int open_midx_bitmap(struct repository *r,
+>  static int open_bitmap(struct repository *r,
+>  		       struct bitmap_index *bitmap_git)
+>  {
+> +	int found = 0;
+> +
+>  	assert(!bitmap_git->map);
+>
+> -	if (!open_midx_bitmap(r, bitmap_git))
+> -		return 0;
+> -	return open_pack_bitmap(r, bitmap_git);
+> +	found = !open_midx_bitmap(r, bitmap_git);
+> +
+> +	/*
+> +	 * these will all be skipped if we opened a midx bitmap; but run it
+> +	 * anyway if tracing is enabled to report the duplicates
+> +	 */
+> +	if (!found || trace2_is_enabled())
+> +		found |= !open_pack_bitmap(r, bitmap_git);
+> +
+> +	return found ? 0 : -1;
+>  }
+>
+>  struct bitmap_index *prepare_bitmap_git(struct repository *r)
+>
+> But I'm not sure if that is even something we want. I know we retained
+> pack bitmaps as a quick recovery mechanism while test-deploying midx
+> bitmaps. OTOH, now that the feature is stable, I doubt anybody else
+> would ever do that.
+>
+> It also suffers from the same coupling issues as the other.
+>
+> So I don't know that either is worth pursuing (hence this message and
+> not fully prepared patches), but these are just the two leftover things
+> I noticed from the series, so I wanted to record them for posterity.
+
+Since this is an internal mechanism, and we are doing reminders in trace2, so
+the diff looks good to me. How about the commit message if I need to take it:
+
+Author: Jeff King <peff@peff.net>
+Date:   Thu Nov 17 20:25:18 2022 +0800
+
+    pack-bitmap.c: trace bitmap ignore logs when midx-bitmap is found
+
+    We retained pack bitmaps as a quick recovery mechanism while
+    test-deploying midx bitmaps. This is an internal mechanism, and we
+    want to expose this rule externally through trace2 so that end users,
+    repo-maintainers, and debuggers know what is happening in the process.
+
+    Signed-off-by: Jeff King <peff@peff.net>
+    Signed-off-by: Teng Long <dyroneteng@gmail.com>
+
+Thank you Peff for providing such detailed suggestions for improvement.

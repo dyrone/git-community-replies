@@ -1,0 +1,16 @@
+Subject: Re: What's cooking in git.git (Nov 2022, #07; Tue, 29)
+
+Taylor Blau <me@ttaylorr.com> writes:
+
+> > Will the two commits which merged to 'next' on 2022-11-14 at 34eb0ea05a
+> > be taken into 2.39.0-rc0 (or v2.39.0 is frozen already)?
+>
+> It is rather late in the release cycle to include new patches. I
+> wouldn't be sad to see them in, either, since they are pretty low risk
+> in my opinion.
+>
+> But I think a safe assumption to make is that they *won't* be in 2.39.0,
+> and that you should resubmit all four as a new series once 'next' is
+> rewound.
+
+Thanks, it's unnecessary to hitchhiking after I read the reply of Junio.

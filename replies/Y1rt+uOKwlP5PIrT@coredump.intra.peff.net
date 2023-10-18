@@ -1,0 +1,31 @@
+Subject: Re: [PATCH 0/1] pack-bitmap.c: avoid exposing absolute paths
+
+Jeff King <peff@peff.net> writes：
+
+> Now this might not be as bad as it seems:
+>
+>   - in the long run, we might open those idx files anyway, if we have to
+>     access those packs. So it's really just overriding the lazy-open
+>     behavior.
+
+Sorry, can you explain it a bit more. When we might open idxes anyway? Do you
+mean if the pack idx files will be opened sooner or later if a repo serves
+git-upload-pack many times in the long run. So, the system-wide table or the
+mmap space will not be wasted so much in practice.
+
+>   - in the worst case, the one bitmap file is at the end of the list, so
+>     you hit all N anyway. And this is actually pretty common, since we
+>     sort in reverse-chronological order, and the bitmap is usually on
+>     the oldest and biggest pack.
+
+Yes, in "sort_pack()" I think.
+
+> So it may not be worth worrying about. It does seem like it would be
+> easy to reorder open_pack_bitmap_1() to look for a bitmap file first and
+> only open the idx if it finds something.
+
+I think it may be worthy if we have lots of packs and the bitmap is refer to
+an older one, but I didn't make the test. At least, the scenario is common, I
+agree with that, so maybe we could shuffle the sort order in "open_pack_bitmap()".
+
+Thanks.

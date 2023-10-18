@@ -1,0 +1,97 @@
+From 196e80358e80c8904cd21e6d8fca2223af93f842 Mon Sep 17 00:00:00 2001
+Message-Id: <cover.1667980450.git.dyroneteng@gmail.com>
+From: Teng Long <dyroneteng@gmail.com>
+Date: Wed, 9 Nov 2022 15:54:10 +0800
+Subject: [PATCH v3 0/5] notes.c: introduce "--no-blank-line" option 
+
+Diff since v2:
+
+* [5/5] make "--no-blank-line" in doc.
+* [1/5] [2/5][3/5]do some cleanups and split to serval independent commit.
+* [3/5] futher explain in commit-msg why we can drop it in "append" but not "add".
+* [4/5] [4/5] use "test_when_finished" to cleanup notes in tests.
+
+Thanks.
+
+Teng Long (5):
+  notes.c: cleanup 'strbuf_grow' call in 'append_edit'
+  notes.c: cleanup for "designated init" and "char ptr init"
+  notes.c: drop unreachable code in 'append_edit()'
+  notes.c: provide tips when target and append note are both empty
+  notes.c: introduce "--no-blank-line" option
+
+ Documentation/git-notes.txt | 10 ++++++++--
+ builtin/notes.c             | 20 ++++++++++----------
+ t/t3301-notes.sh            | 18 ++++++++++++++++--
+ 3 files changed, 34 insertions(+), 14 deletions(-)
+
+Range-diff against v2:
+-:  ---------- > 1:  8ae58934a1 notes.c: cleanup 'strbuf_grow' call in 'append_edit'
+-:  ---------- > 2:  a53576ea88 notes.c: cleanup for "designated init" and "char ptr init"
+-:  ---------- > 3:  62a952ba3e notes.c: drop unreachable code in 'append_edit()'
+-:  ---------- > 4:  0d8ce0b14b notes.c: provide tips when target and append note are both empty
+1:  2381947abd ! 5:  196e80358e notes.c: introduce "--blank-line" option
+    @@ Metadata
+     Author: Teng Long <dyroneteng@gmail.com>
+     
+      ## Commit message ##
+    -    notes.c: introduce "--blank-line" option
+    +    notes.c: introduce "--no-blank-line" option
+     
+         When appending to a given object which has note and if the appended
+         note is not empty too, we will insert a blank line at first. The
+    @@ Documentation/git-notes.txt: SYNOPSIS
+      'git notes' add [-f] [--allow-empty] [-F <file> | -m <msg> | (-c | -C) <object>] [<object>]
+      'git notes' copy [-f] ( --stdin | <from-object> [<to-object>] )
+     -'git notes' append [--allow-empty] [-F <file> | -m <msg> | (-c | -C) <object>] [<object>]
+    -+'git notes' append [--allow-empty] [--blank-line] [-F <file> | -m <msg> | (-c | -C) <object>] [<object>]
+    ++'git notes' append [--allow-empty] [--no-blank-line] [-F <file> | -m <msg> | (-c | -C) <object>] [<object>]
+      'git notes' edit [--allow-empty] [<object>]
+      'git notes' show [<object>]
+      'git notes' merge [-v | -q] [-s <strategy> ] <notes-ref>
+    @@ Documentation/git-notes.txt: OPTIONS
+      	Allow an empty note object to be stored. The default behavior is
+      	to automatically remove empty notes.
+      
+    -+--blank-line::
+     +--no-blank-line::
+    -+	Controls if a blank line to split paragraphs is inserted
+    -+	when appending (the default is true).
+    ++	Do not insert a blank line before the inserted notes (insert
+    ++	a blank line is the default).
+     +
+      --ref <ref>::
+      	Manipulate the notes tree in <ref>.  This overrides
+    @@ builtin/notes.c: static int append_edit(int argc, const char **argv, const char
+      	};
+      	int edit = !strcmp(argv[0], "edit");
+     @@ builtin/notes.c: static int append_edit(int argc, const char **argv, const char *prefix)
+    + 		enum object_type type;
+      		char *prev_buf = read_object_file(note, &type, &size);
+      
+    - 		strbuf_grow(&d.buf, size + 1);
+     -		if (d.buf.len && prev_buf && size)
+     +		if (blankline && d.buf.len && prev_buf && size)
+      			strbuf_insertstr(&d.buf, 0, "\n");
+    @@ t/t3301-notes.sh: test_expect_success 'listing non-existing notes fails' '
+      '
+      
+     +test_expect_success 'append to existing note without a beginning blank line' '
+    ++	test_when_finished git notes remove HEAD &&
+     +	cat >expect <<-\EOF &&
+     +		Initial set of notes
+     +		Appended notes
+    @@ t/t3301-notes.sh: test_expect_success 'listing non-existing notes fails' '
+      
+      		More notes appended with git notes append
+      	EOF
+    -+	git notes remove HEAD &&
+    ++
+      	git notes add -m "Initial set of notes" &&
+      	git notes append -m "More notes appended with git notes append" &&
+      	git notes show >actual &&
+2:  5dbe014a09 < -:  ---------- notes.c: fixed tip when target and append note are both empty
+3:  2475ea0c04 < -:  ---------- notes.c: drop unreachable code in "append_edit()"
+-- 
+2.38.1.386.g196e80358e8
+

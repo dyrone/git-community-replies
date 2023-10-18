@@ -1,0 +1,29 @@
+From aaa66dbeb4bde7e0dacabfa89b87f94db157a50d Mon Sep 17 00:00:00 2001
+From: Teng Long <dyroneteng@gmail.com>
+Date: Wed, 16 Nov 2022 11:07:31 +0800
+Subject: [RFC PATCH 2/6] t3104: remove shift code in 'test_ls_tree_format'
+
+In t3104-ls-tree-format.sh, There is a legacy 'shift 2' code
+and the relevant code block no longer depends on it anymore,
+so let's remove it for a small cleanup.
+
+Signed-off-by: Teng Long <dyroneteng@gmail.com>
+---
+ t/t3104-ls-tree-format.sh | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/t/t3104-ls-tree-format.sh b/t/t3104-ls-tree-format.sh
+index 383896667b6..74053978f49 100755
+--- a/t/t3104-ls-tree-format.sh
++++ b/t/t3104-ls-tree-format.sh
+@@ -20,7 +20,6 @@ test_ls_tree_format () {
+ 	format=$1 &&
+ 	opts=$2 &&
+ 	fmtopts=$3 &&
+-	shift 2 &&
+ 
+ 	test_expect_success "ls-tree '--format=<$format>' is like options '$opts $fmtopts'" '
+ 		git ls-tree $opts -r HEAD >expect &&
+-- 
+2.38.1.426.g770fc8806cb.dirty
+
