@@ -1,0 +1,22 @@
+Subject: What's cooking in git.git (Jun 2023, #07; Tue, 27)
+
+Junio C Hamano <gitster@pobox.com> writes:
+
+> * tl/notes-separator (2023-06-21) 7 commits
+>  - notes: introduce "--no-separator" option
+>  - notes.c: introduce "--[no-]stripspace" option
+>  - notes.c: append separator instead of insert by pos
+>  - notes.c: introduce '--separator=<paragraph-break>' option
+>  - t3321: add test cases about the notes stripspace behavior
+>  - notes.c: use designated initializers for clarity
+>  - notes.c: cleanup 'strbuf_grow' call in 'append_edit'
+> 
+>  'git notes append' was taught '--separator' to specify string to insert
+>  between paragraphs.
+>  source: <cover.1685174011.git.dyroneteng@gmail.com>
+
+There are no pending issues I think ;-)
+
+Please let me know if there are some obstables to merge.
+
+Thanks.

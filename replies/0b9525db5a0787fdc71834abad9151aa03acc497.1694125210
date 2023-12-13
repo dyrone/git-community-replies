@@ -1,0 +1,20 @@
+Subject: [PATCH v3 13/13] trailer doc: <token> is a <key> or <keyAlias>, not both
+
+Linus Arver <linusa@google.com> writes:
+
+> diff --git a/Documentation/git-interpret-trailers.txt b/Documentation/git-interpret-trailers.txt
+> index 25433e1a1ff..418265f044d 100644
+> --- a/Documentation/git-interpret-trailers.txt
+> +++ b/Documentation/git-interpret-trailers.txt
+> @@ -9,7 +9,7 @@ SYNOPSIS
+>  --------
+>  [verse]
+>  'git interpret-trailers' [--in-place] [--trim-empty]
+> -			[(--trailer <token>[(=|:)<value>])...]
+> +			[(--trailer (<key>|<keyAlias>)[(=|:)<value>])...]
+
+Maybe use 'key-alias' instead of 'keyAlias'? After checking the naming in some
+other documents, it seems that they are basically in the former format, not
+camel case format.
+
+Thanks.
